@@ -265,88 +265,9 @@ const HeroSection = () => {
                 </Button>
               </motion.div>
             </Link>
-
-            <motion.div
-              variants={buttonVariants}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="ml-4"
-            >
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-gray-900 rounded-full px-8 py-4 text-lg transition-all duration-300"
-              >
-                <Play className="mr-2 w-5 h-5" />
-                Watch Tour
-              </Button>
-            </motion.div>
-          </motion.div>
-
-          {/* Additional Info */}
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center"
-            variants={containerVariants}
-          >
-            <motion.div variants={itemVariants} className="space-y-2">
-              <motion.div 
-                className="text-3xl font-bold text-accent"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 2, duration: 0.5 }}
-              >
-                500+
-              </motion.div>
-              <p className="text-gray-300">Daily Routes</p>
-            </motion.div>
-            
-            <motion.div variants={itemVariants} className="space-y-2">
-              <motion.div 
-                className="text-3xl font-bold text-accent"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 2.2, duration: 0.5 }}
-              >
-                1M+
-              </motion.div>
-              <p className="text-gray-300">Happy Travelers</p>
-            </motion.div>
-            
-            <motion.div variants={itemVariants} className="space-y-2">
-              <motion.div 
-                className="text-3xl font-bold text-accent"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 2.4, duration: 0.5 }}
-              >
-                24/7
-              </motion.div>
-              <p className="text-gray-300">Support</p>
-            </motion.div>
           </motion.div>
         </motion.div>
       </div>
-
-      {/* Scroll Indicator */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 3, duration: 0.8 }}
-      >
-        <motion.div
-          className="w-6 h-10 border-2 border-white rounded-full flex justify-center"
-          animate={{ y: [0, 5, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <motion.div
-            className="w-1 h-3 bg-white rounded-full mt-2"
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </motion.div>
-        <p className="text-white text-sm mt-2 opacity-70">Scroll to explore</p>
-      </motion.div>
     </section>
   );
 };

@@ -8,8 +8,8 @@ import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, Variants, AnimatePresence } from 'framer-motion';
 
 const HeroSection = () => {
-  // Image slider data
-  const heroImages = [
+  // Desktop image slider data
+  const desktopImages = [
     {
       src: '/heroimg1.jpg',
       alt: 'Sri Lankan bus journey through mountains'
@@ -20,40 +20,72 @@ const HeroSection = () => {
     },
     {
       src: '/aboutimg.jpg',
-      alt: 'Comfortable bus interior'
+      alt: 'Beautiful Sri Lankan landscape'
+    },
+  ];
+
+  // Mobile image slider data (optimized for mobile viewing)
+  const mobileImages = [
+    {
+      src: '/mobileimg1.jpg',
+      alt: 'Sri Lankan bus journey - mobile view'
     },
     {
-      src: '/heroimg3.jpeg',
-      alt: 'Comfortable bus interior'
+      src: '/mobileimg2.jpg',
+      alt: 'Comfortable bus interior - mobile view'
+    },
+    {
+      src: '/mobileimg3.jpg',
+      alt: 'Beautiful landscape - mobile view'
     },
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
-  // Auto-slide configuration - CHANGE THIS VALUE TO MODIFY SLIDE TIMING
-  const SLIDE_INTERVAL = 4000; // 2 seconds (2000ms) - Change this to modify timing
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Auto-slide configuration
+  const SLIDE_INTERVAL = 4000; // 4 seconds
+
+  // Check if mobile view
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Get current images based on device type
+  const currentImages = isMobile ? mobileImages : desktopImages;
 
   // Auto-slide effect
   useEffect(() => {
     const slideTimer = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => 
-        prevIndex === heroImages.length - 1 ? 0 : prevIndex + 1
+      setCurrentImageIndex((prevIndex) =>
+        prevIndex === currentImages.length - 1 ? 0 : prevIndex + 1
       );
     }, SLIDE_INTERVAL);
 
     return () => clearInterval(slideTimer);
-  }, [heroImages.length]);
+  }, [currentImages.length]);
+
+  // Reset index when switching between mobile/desktop
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [isMobile]);
 
   // Manual navigation functions
   const goToNextSlide = () => {
-    setCurrentImageIndex((prevIndex) => 
-      prevIndex === heroImages.length - 1 ? 0 : prevIndex + 1
+    setCurrentImageIndex((prevIndex) =>
+      prevIndex === currentImages.length - 1 ? 0 : prevIndex + 1
     );
   };
 
   const goToPrevSlide = () => {
-    setCurrentImageIndex((prevIndex) => 
-      prevIndex === 0 ? heroImages.length - 1 : prevIndex - 1
+    setCurrentImageIndex((prevIndex) =>
+      prevIndex === 0 ? currentImages.length - 1 : prevIndex - 1
     );
   };
 
@@ -63,8 +95,8 @@ const HeroSection = () => {
 
   // Animation variants with proper typing
   const containerVariants: Variants = {
-    hidden: { 
-      opacity: 0 
+    hidden: {
+      opacity: 0
     },
     visible: {
       opacity: 1,
@@ -76,9 +108,9 @@ const HeroSection = () => {
   };
 
   const itemVariants: Variants = {
-    hidden: { 
-      y: 50, 
-      opacity: 0 
+    hidden: {
+      y: 50,
+      opacity: 0
     },
     visible: {
       y: 0,
@@ -91,9 +123,9 @@ const HeroSection = () => {
   };
 
   const titleVariants: Variants = {
-    hidden: { 
-      scale: 0.8, 
-      opacity: 0 
+    hidden: {
+      scale: 0.8,
+      opacity: 0
     },
     visible: {
       scale: 1,
@@ -106,9 +138,9 @@ const HeroSection = () => {
   };
 
   const buttonVariants: Variants = {
-    hidden: { 
-      scale: 0, 
-      opacity: 0 
+    hidden: {
+      scale: 0,
+      opacity: 0
     },
     visible: {
       scale: 1,
@@ -131,36 +163,34 @@ const HeroSection = () => {
     }
   };
 
+  // Updated image variants for smooth fade transition
   const imageVariants: Variants = {
     enter: {
       opacity: 0,
-      scale: 1.1
     },
     center: {
       opacity: 1,
-      scale: 1,
       transition: {
-        duration: 1,
-        ease: "easeOut"
+        duration: 0.8,
+        ease: "easeInOut"
       }
     },
     exit: {
       opacity: 0,
-      scale: 0.9,
       transition: {
-        duration: 0.5,
-        ease: "easeIn"
+        duration: 0.4,
+        ease: "easeInOut"
       }
     }
   };
 
   const textSlideVariants: Variants = {
-    hidden: { 
-      opacity: 0, 
-      x: -50 
+    hidden: {
+      opacity: 0,
+      x: -50
     },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       x: 0,
       transition: {
         duration: 0.8,
@@ -170,12 +200,12 @@ const HeroSection = () => {
   };
 
   const textSlideRightVariants: Variants = {
-    hidden: { 
-      opacity: 0, 
-      x: 50 
+    hidden: {
+      opacity: 0,
+      x: 50
     },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       x: 0,
       transition: {
         duration: 0.8,
@@ -223,12 +253,12 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
       {/* Background Image Slider */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 bg-black">
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentImageIndex}
+            key={`${isMobile ? 'mobile' : 'desktop'}-${currentImageIndex}`}
             variants={imageVariants}
             initial="enter"
             animate="center"
@@ -236,18 +266,19 @@ const HeroSection = () => {
             className="absolute inset-0"
           >
             <Image
-              src={heroImages[currentImageIndex].src}
-              alt={heroImages[currentImageIndex].alt}
+              src={currentImages[currentImageIndex].src}
+              alt={currentImages[currentImageIndex].alt}
               fill
               className="object-cover"
               priority={currentImageIndex === 0}
               quality={90}
+              sizes="100vw"
             />
           </motion.div>
         </AnimatePresence>
-        
-        {/* Overlay */}
-        <motion.div 
+
+        {/* Overlay with enhanced gradient */}
+        <motion.div
           className="absolute inset-0 bg-black/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -262,7 +293,7 @@ const HeroSection = () => {
                    bg-blue-500/30 hover:bg-blue-600/40 text-white p-2 md:p-3 rounded-full 
                    backdrop-blur-sm transition-all duration-300 hover:scale-110
                    border border-blue-400/50 hover:border-blue-300
-                   hidden sm:block"
+                   hidden sm:block shadow-lg"
         aria-label="Previous image"
       >
         <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
@@ -274,7 +305,7 @@ const HeroSection = () => {
                    bg-blue-500/30 hover:bg-blue-600/40 text-white p-2 md:p-3 rounded-full 
                    backdrop-blur-sm transition-all duration-300 hover:scale-110
                    border border-blue-400/50 hover:border-blue-300
-                   hidden sm:block"
+                   hidden sm:block shadow-lg"
         aria-label="Next image"
       >
         <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
@@ -283,15 +314,15 @@ const HeroSection = () => {
       {/* Slide Indicators */}
       <div className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 z-20 
                       flex space-x-2 md:space-x-3">
-        {heroImages.map((_, index) => (
+        {currentImages.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
             className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 
-                        ${index === currentImageIndex 
-                          ? 'bg-blue-500 scale-125 shadow-lg shadow-blue-500/50' 
-                          : 'bg-blue-300/60 hover:bg-blue-400/80'
-                        }`}
+                        ${index === currentImageIndex
+                ? 'bg-primary scale-125 shadow-lg shadow-blue-500/50'
+                : 'bg-blue-300/60 hover:bg-blue-400/80'
+              }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
@@ -300,28 +331,28 @@ const HeroSection = () => {
       {/* Animated Background Elements */}
       <motion.div
         className="absolute top-16 md:top-20 left-4 md:left-10 w-3 h-3 md:w-4 md:h-4 
-                   bg-yellow-400 rounded-full opacity-60"
+                   bg-yellow-400 rounded-full opacity-60 shadow-lg"
         variants={floatingElementVariants}
         animate="animate"
       />
       <motion.div
         className="absolute bottom-24 md:bottom-32 right-8 md:right-16 w-4 h-4 md:w-6 md:h-6 
-                   bg-blue-400 rounded-full opacity-40"
+                   bg-blue-400 rounded-full opacity-40 shadow-lg"
         variants={floatingElement2Variants}
         animate="animate"
       />
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center text-white">
-        <motion.div 
+        <motion.div
           className="max-w-4xl mx-auto"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          <motion.h1 
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 
-                       font-bold mb-4 md:mb-6 leading-tight"
+          <motion.h1
+            className="text-6xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 
+                       font-bold mb-4 md:mb-6 leading-tight drop-shadow-2xl"
             variants={titleVariants}
           >
             <motion.span
@@ -333,8 +364,8 @@ const HeroSection = () => {
             >
               Your Journey
             </motion.span>
-            <motion.span 
-              className="text-accent block"
+            <motion.span
+              className="text-accent block bg-accent bg-clip-text"
               variants={textSlideRightVariants}
               initial="hidden"
               animate="visible"
@@ -344,15 +375,15 @@ const HeroSection = () => {
             </motion.span>
           </motion.h1>
 
-          <motion.p 
+          <motion.p
             className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 
-                       text-gray-200 max-w-2xl mx-auto px-4"
+                       text-gray-200 max-w-2xl mx-auto px-4 drop-shadow-lg"
             variants={itemVariants}
           >
             Experience comfortable, safe, and reliable bus travel across beautiful Sri Lanka.
           </motion.p>
-          
-          <motion.div 
+
+          <motion.div
             className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center 
                        mb-8 md:mb-12 px-4"
             variants={itemVariants}
@@ -363,11 +394,12 @@ const HeroSection = () => {
                 whileHover="hover"
                 whileTap="tap"
               >
-                <Button 
-                  size="lg" 
-                  className="bg-primary hover:bg-primary/90 text-white rounded-full 
-                             px-6 py-3 md:px-8 md:py-4 text-base md:text-lg cursor-pointer 
-                             shadow-2xl transition-all duration-300 w-full sm:w-auto"
+                <Button
+                  size="lg"
+                  className="bg-primary animate-bounce 
+                             text-white rounded-full px-6 py-3 md:px-8 md:py-4 text-base md:text-lg 
+                             cursor-pointer shadow-2xl transition-all duration-300 w-full sm:w-auto
+                             border border-blue-400/30"
                 >
                   <motion.span
                     initial={{ opacity: 0 }}
@@ -387,10 +419,15 @@ const HeroSection = () => {
               </motion.div>
             </Link>
           </motion.div>
+
+          {/* Device indicator for development (remove in production) */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="fixed top-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-xs">
+              {isMobile ? 'Mobile' : 'Desktop'} View
+            </div>
+          )}
         </motion.div>
       </div>
-
-      
     </section>
   );
 };

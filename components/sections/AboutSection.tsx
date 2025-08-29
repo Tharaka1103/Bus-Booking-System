@@ -226,7 +226,7 @@ const AboutSection = () => {
   };
 
   return (
-    <section className="py-16 lg:py-24 bg-gradient-to-br from-gray-50 via-white to-blue-50 overflow-hidden">
+    <section className="py-16 lg:py-24 bg-gradient-to-br from-gray-50 via-white to-blue-50 overflow-hidden" id="about">
       <div className="container mx-auto px-4">
         {/* Header Section */}
         <motion.div 

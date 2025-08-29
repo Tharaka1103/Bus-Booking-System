@@ -253,7 +253,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
+    <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black" id="hero">
       {/* Background Image Slider */}
       <div className="absolute inset-0 z-0 bg-black">
         <AnimatePresence mode="wait">

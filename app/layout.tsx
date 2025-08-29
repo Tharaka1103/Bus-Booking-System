@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Preloader } from '@/components/Preloader';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 const inter = Inter({ 
   subsets: ['latin'], 
@@ -28,9 +29,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const [showPreloader, setShowPreloader] = useState(true);
+  const pathname = usePathname();
+
+  // Define routes where header and footer should be hidden
+  const hideHeaderFooterRoutes = ['/login', '/register', '/signin', '/signup'];
+  const shouldHideHeaderFooter = hideHeaderFooterRoutes.includes(pathname);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowPreloader(false), 5000); // 10 seconds
+    const timer = setTimeout(() => setShowPreloader(false), 5000); // 5 seconds
     return () => clearTimeout(timer);
   }, []);
 
@@ -41,9 +47,9 @@ export default function RootLayout({
           <Preloader />
         ) : (
           <>
-            <Header />
+            {!shouldHideHeaderFooter && <Header />}
             {children}
-            <Footer />
+            {!shouldHideHeaderFooter && <Footer />}
           </>
         )}
       </body>

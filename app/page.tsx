@@ -10,7 +10,7 @@ import {Preloader} from '@/components/Preloader'
 export default function HomePage() {
   return (
     <main className="min-h-screen">
-      <HeroSection />
+      <HeroSection/>
       <AboutSection />
       <ServicesSection />
       <PopularRoutesSection />

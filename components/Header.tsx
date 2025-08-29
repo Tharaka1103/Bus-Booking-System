@@ -47,15 +47,15 @@ const Header = () => {
 
   const navItems = [
     { name: 'Home', href: '/' },
-    { name: 'Routes', href: '/routes' },
-    { name: 'About', href: '/about' },
-    { name: 'Services', href: '/services' },
-    { name: 'Contact', href: '/contact' },
+    { name: 'Routes', href: '#routes' },
+    { name: 'About', href: '#about' },
+    { name: 'Services', href: '#services' },
+    { name: 'Contact', href: '#contact' },
   ];
 
   return (
     <header className={`shadow-lg sticky top-0 z-50 transition-all duration-500 ease-in-out ${
-      isScrolled ? 'shadow-xl' : 'shadow-lg'
+      isScrolled ? 'shadow-xl backdrop-blur-lg' : 'shadow-lg'
     }`}>
 
       {/* Main header */}
@@ -146,7 +146,7 @@ const Header = () => {
                     variant="outline"
                     className={`transition-all duration-500 ease-in-out border-2 border-primary hover:border-blue-600 hover:bg-blue-50 bg-transparent font-medium rounded-full ${
                       isScrolled 
-                        ? 'h-9 px-3 text-sm shadow-md hover:shadow-lg' 
+                        ? 'h-9 px-3 text-sm text-black shadow-md hover:shadow-lg' 
                         : 'h-10 px-4 text-base shadow-sm hover:shadow-md'
                     }`}
                   >

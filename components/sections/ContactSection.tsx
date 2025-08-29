@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 
 const ContactSection = () => {
   return (
-    <section className="py-10 bg-white">
+    <section className="py-16 lg:py-24 bg-white " id="contact">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h1 className="text-3xl md:text-5xl font-bold text-accent mb-4">
@@ -25,8 +25,8 @@ const ContactSection = () => {
             
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <MapPin className="w-6 h-6 text-blue-600" />
+                <div className="flex-shrink-0 w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
+                  <MapPin className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-800 mb-1">Head Office</h4>
@@ -38,8 +38,8 @@ const ContactSection = () => {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Phone className="w-6 h-6 text-blue-600" />
+                <div className="flex-shrink-0 w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
+                  <Phone className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-800 mb-1">Phone Numbers</h4>
@@ -51,8 +51,8 @@ const ContactSection = () => {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Mail className="w-6 h-6 text-blue-600" />
+                <div className="flex-shrink-0 w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
+                  <Mail className="w-6 h-6 primary" />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-800 mb-1">Email</h4>
@@ -64,8 +64,8 @@ const ContactSection = () => {
               </div>
 
               <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-blue-600" />
+                <div className="flex-shrink-0 w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
+                  <Clock className="w-6 h-6 primary" />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-800 mb-1">Office Hours</h4>
@@ -84,46 +84,46 @@ const ContactSection = () => {
           </div>
 
           {/* Contact Form */}
-          <div>
+          <div className=''>
             <h3 className="text-3xl font-bold text-gray-800 mb-8">
               Send us a Message
             </h3>
             
-            <form className="space-y-6">
+            <form className="space-y-6 bg-accent rounded-3xl p-10">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-white text-lg mb-2">
                     First Name
                   </label>
-                  <Input placeholder="Your first name" />
+                  <Input placeholder="Your first name" className=' border border-primary' />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block font-medium text-white text-lg mb-2">
                     Last Name
                   </label>
-                  <Input placeholder="Your last name" />
+                  <Input placeholder="Your last name" className=' border border-primary' />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block font-medium text-white text-lg mb-2">
                   Email Address
                 </label>
-                <Input type="email" placeholder="your.email@example.com" />
+                <Input type="email" placeholder="your.email@example.com" className=' border border-primary' />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block font-medium text-white text-lg mb-2">
                   Phone Number
                 </label>
-                <Input placeholder="+94 XX XXX XXXX" />
+                <Input placeholder="+94 XX XXX XXXX" className=' border border-primary' />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block font-medium text-white text-lg mb-2">
                   Subject
                 </label>
-                <select className="w-full h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select className="w-full h-10 px-3 border border-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">Select a subject</option>
                   <option value="booking">Booking Inquiry</option>
                   <option value="complaint">Complaint</option>
@@ -133,12 +133,12 @@ const ContactSection = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block font-medium text-white text-lg mb-2">
                   Message
                 </label>
                 <textarea 
                   rows={5}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Tell us how we can help you..."
                 ></textarea>
               </div>

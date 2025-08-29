@@ -14,10 +14,8 @@ const BookingSection = () => {
   });
 
   const popularRoutes = [
-    { from: 'Colombo', to: 'Kandy' },
-    { from: 'Colombo', to: 'Galle' },
-    { from: 'Kandy', to: 'Nuwara Eliya' },
-    { from: 'Colombo', to: 'Jaffna' }
+    { from: 'Colombo', to: 'Kaduruwela' },
+    { from: 'Colombo', to: 'Trincomqlee' }
   ];
 
   return (

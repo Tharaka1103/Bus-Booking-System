@@ -69,7 +69,7 @@ const AboutSection = () => {
           <div className="relative image-bg">
             <div className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden">
               <Image
-                src="/bg.jpg" // Add an image of your buses or team
+                src="/aboutimg.jpg" // Add an image of your buses or team
                 alt="Vijitha Travels bus and team"
                 fill
                 className="object-cover z-10"

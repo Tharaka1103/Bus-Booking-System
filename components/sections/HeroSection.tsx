@@ -1,12 +1,66 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Play } from 'lucide-react';
-import { motion, Variants } from 'framer-motion';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, Variants, AnimatePresence } from 'framer-motion';
 
 const HeroSection = () => {
+  // Image slider data
+  const heroImages = [
+    {
+      src: '/heroimg1.jpg',
+      alt: 'Sri Lankan bus journey through mountains'
+    },
+    {
+      src: '/heroimg2.jpg',
+      alt: 'Comfortable bus interior'
+    },
+    {
+      src: '/aboutimg.jpg',
+      alt: 'Comfortable bus interior'
+    },
+    {
+      src: '/heroimg3.jpeg',
+      alt: 'Comfortable bus interior'
+    },
+  ];
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // Auto-slide configuration - CHANGE THIS VALUE TO MODIFY SLIDE TIMING
+  const SLIDE_INTERVAL = 4000; // 2 seconds (2000ms) - Change this to modify timing
+
+  // Auto-slide effect
+  useEffect(() => {
+    const slideTimer = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === heroImages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, SLIDE_INTERVAL);
+
+    return () => clearInterval(slideTimer);
+  }, [heroImages.length]);
+
+  // Manual navigation functions
+  const goToNextSlide = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === heroImages.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const goToPrevSlide = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? heroImages.length - 1 : prevIndex - 1
+    );
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentImageIndex(index);
+  };
+
   // Animation variants with proper typing
   const containerVariants: Variants = {
     hidden: { 
@@ -77,17 +131,25 @@ const HeroSection = () => {
     }
   };
 
-  const backgroundVariants: Variants = {
-    hidden: { 
-      scale: 1.1, 
-      opacity: 0 
+  const imageVariants: Variants = {
+    enter: {
+      opacity: 0,
+      scale: 1.1
     },
-    visible: {
-      scale: 1,
+    center: {
       opacity: 1,
+      scale: 1,
       transition: {
-        duration: 1.5,
+        duration: 1,
         ease: "easeOut"
+      }
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.9,
+      transition: {
+        duration: 0.5,
+        ease: "easeIn"
       }
     }
   };
@@ -162,36 +224,89 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
-      {/* Background Image */}
-      <motion.div 
-        className="absolute inset-0 z-0"
-        variants={backgroundVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <Image
-          src="/busnew.jpg"
-          alt="Sri Lankan landscape with bus"
-          fill
-          className="object-cover"
-          priority
-        />
+      {/* Background Image Slider */}
+      <div className="absolute inset-0 z-0">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentImageIndex}
+            variants={imageVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            className="absolute inset-0"
+          >
+            <Image
+              src={heroImages[currentImageIndex].src}
+              alt={heroImages[currentImageIndex].alt}
+              fill
+              className="object-cover"
+              priority={currentImageIndex === 0}
+              quality={90}
+            />
+          </motion.div>
+        </AnimatePresence>
+        
+        {/* Overlay */}
         <motion.div 
           className="absolute inset-0 bg-black/50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1, delay: 0.5 }}
         />
-      </motion.div>
+      </div>
+
+      {/* Navigation Arrows - Hidden on mobile */}
+      <button
+        onClick={goToPrevSlide}
+        className="absolute left-4 md:left-8 top-1/2 transform -translate-y-1/2 z-20 
+                   bg-blue-500/30 hover:bg-blue-600/40 text-white p-2 md:p-3 rounded-full 
+                   backdrop-blur-sm transition-all duration-300 hover:scale-110
+                   border border-blue-400/50 hover:border-blue-300
+                   hidden sm:block"
+        aria-label="Previous image"
+      >
+        <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+      </button>
+
+      <button
+        onClick={goToNextSlide}
+        className="absolute right-4 md:right-8 top-1/2 transform -translate-y-1/2 z-20 
+                   bg-blue-500/30 hover:bg-blue-600/40 text-white p-2 md:p-3 rounded-full 
+                   backdrop-blur-sm transition-all duration-300 hover:scale-110
+                   border border-blue-400/50 hover:border-blue-300
+                   hidden sm:block"
+        aria-label="Next image"
+      >
+        <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+      </button>
+
+      {/* Slide Indicators */}
+      <div className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 z-20 
+                      flex space-x-2 md:space-x-3">
+        {heroImages.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all duration-300 
+                        ${index === currentImageIndex 
+                          ? 'bg-blue-500 scale-125 shadow-lg shadow-blue-500/50' 
+                          : 'bg-blue-300/60 hover:bg-blue-400/80'
+                        }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
 
       {/* Animated Background Elements */}
       <motion.div
-        className="absolute top-20 left-10 w-4 h-4 bg-yellow-400 rounded-full opacity-60"
+        className="absolute top-16 md:top-20 left-4 md:left-10 w-3 h-3 md:w-4 md:h-4 
+                   bg-yellow-400 rounded-full opacity-60"
         variants={floatingElementVariants}
         animate="animate"
       />
       <motion.div
-        className="absolute bottom-32 right-16 w-6 h-6 bg-blue-400 rounded-full opacity-40"
+        className="absolute bottom-24 md:bottom-32 right-8 md:right-16 w-4 h-4 md:w-6 md:h-6 
+                   bg-blue-400 rounded-full opacity-40"
         variants={floatingElement2Variants}
         animate="animate"
       />
@@ -205,7 +320,8 @@ const HeroSection = () => {
           animate="visible"
         >
           <motion.h1 
-            className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 
+                       font-bold mb-4 md:mb-6 leading-tight"
             variants={titleVariants}
           >
             <motion.span
@@ -213,6 +329,7 @@ const HeroSection = () => {
               initial="hidden"
               animate="visible"
               transition={{ delay: 0.5 }}
+              className="block"
             >
               Your Journey
             </motion.span>
@@ -228,14 +345,16 @@ const HeroSection = () => {
           </motion.h1>
 
           <motion.p 
-            className="text-xl md:text-2xl mb-8 text-gray-200 max-w-2xl mx-auto"
+            className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 
+                       text-gray-200 max-w-2xl mx-auto px-4"
             variants={itemVariants}
           >
             Experience comfortable, safe, and reliable bus travel across beautiful Sri Lanka.
           </motion.p>
           
           <motion.div 
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
+            className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center 
+                       mb-8 md:mb-12 px-4"
             variants={itemVariants}
           >
             <Link href="/booking">
@@ -246,7 +365,9 @@ const HeroSection = () => {
               >
                 <Button 
                   size="lg" 
-                  className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 py-4 text-lg cursor-pointer shadow-2xl transition-all duration-300"
+                  className="bg-primary hover:bg-primary/90 text-white rounded-full 
+                             px-6 py-3 md:px-8 md:py-4 text-base md:text-lg cursor-pointer 
+                             shadow-2xl transition-all duration-300 w-full sm:w-auto"
                 >
                   <motion.span
                     initial={{ opacity: 0 }}
@@ -260,7 +381,7 @@ const HeroSection = () => {
                     animate="animate"
                     className="inline-block"
                   >
-                    <ArrowRight className="ml-2 w-5 h-5" />
+                    <ArrowRight className="ml-2 w-4 h-4 md:w-5 md:h-5" />
                   </motion.div>
                 </Button>
               </motion.div>
@@ -268,6 +389,8 @@ const HeroSection = () => {
           </motion.div>
         </motion.div>
       </div>
+
+      
     </section>
   );
 };

@@ -16,9 +16,9 @@ const PopularRoutesSection = () => {
     },
     {
       from: "Colombo",
-      to: "Galle",
+      to: "Trincomalee",
       duration: "2h 45m",
-      price: "Rs. 380",
+      price: "Rs. 1850",
       rating: 4.7,
       trips: "15 daily trips",
       image: "/galle.jpg",

@@ -236,16 +236,12 @@ const AboutSection = () => {
           whileInView="visible"
           viewport={{ once: true }}
         >
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-4">
-            <Star className="w-4 h-4" />
-            About Vijitha Travels
-          </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-4xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
             Your Trusted Travel Partner
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+            <span className="block text-transparent bg-clip-text bg-accent">
               Since 1995
             </span>
-          </h2>
+          </h1>
           <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
             Connecting hearts, destinations, and dreams across the beautiful island of Sri Lanka 
             with safe, comfortable, and reliable transportation services.
@@ -264,7 +260,7 @@ const AboutSection = () => {
           >
             <motion.div variants={itemVariants} className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-1 h-12 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
+                <div className="w-1 h-12 bg-primary rounded-full"></div>
                 <h3 className="text-2xl md:text-3xl font-bold text-gray-900">
                   Our Story
                 </h3>
@@ -283,60 +279,14 @@ const AboutSection = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+              <div className="flex items-center gap-4 p-4 bg-sidebar rounded-xl border border-blue-100">
                 <div className="p-2 bg-white rounded-lg shadow-sm">
-                  <MapPin className="w-6 h-6 text-blue-600" />
+                  <MapPin className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Island-Wide Coverage</p>
                   <p className="text-sm text-gray-600">Connecting all major cities and towns</p>
                 </div>
-              </div>
-            </motion.div>
-
-            {/* Interactive Features */}
-            <motion.div variants={itemVariants} className="space-y-4">
-              <h4 className="text-xl font-bold text-gray-900 mb-6">Why Choose Vijitha Travels?</h4>
-              <div className="space-y-3">
-                {features.map((feature, index) => (
-                  <motion.div
-                    key={index}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                      activeFeature === index
-                        ? `${feature.bgColor} border-blue-200 shadow-lg`
-                        : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-md'
-                    }`}
-                    onClick={() => setActiveFeature(index)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`p-2 rounded-lg ${activeFeature === index ? 'bg-white shadow-sm' : feature.bgColor}`}>
-                        <div className={activeFeature === index ? feature.textColor : feature.textColor}>
-                          {feature.icon}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h5 className="font-semibold text-gray-900">{feature.title}</h5>
-                          <ChevronRight className={`w-5 h-5 transition-transform duration-300 ${
-                            activeFeature === index ? 'rotate-90 text-blue-600' : 'text-gray-400'
-                          }`} />
-                        </div>
-                        {activeFeature === index && (
-                          <motion.p
-                            variants={expandVariants}
-                            initial="hidden"
-                            animate="visible"
-                            className="text-gray-600 mt-2 text-sm overflow-hidden"
-                          >
-                            {feature.description}
-                          </motion.p>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
               </div>
             </motion.div>
           </motion.div>
@@ -380,33 +330,6 @@ const AboutSection = () => {
 
                 {/* Video Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20 pointer-events-none"></div>
-                
-                {/* Video Controls Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                  <motion.button
-                    className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl hover:bg-white/30 transition-colors group border border-white/30"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={(e) => {
-                      const video = e.currentTarget.parentElement?.previousElementSibling as HTMLVideoElement;
-                      if (video?.paused) {
-                        video.play();
-                      } else {
-                        video?.pause();
-                      }
-                    }}
-                  >
-                    <Play className="w-8 h-8 text-white ml-1 group-hover:text-white/90" />
-                  </motion.button>
-                </div>
-
-                {/* Video Info Badge */}
-                <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                    Live Preview
-                  </div>
-                </div>
               </div>
 
               {/* Floating Stats Card */}
@@ -417,32 +340,24 @@ const AboutSection = () => {
                 whileInView="visible"
                 viewport={{ once: true }}
               >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-600">Live Status</span>
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-2xl font-bold text-blue-600">98%</p>
+                    <p className="text-2xl font-bold text-primary">98%</p>
                     <p className="text-xs text-gray-500">On-Time Rate</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-green-600">4.9★</p>
+                    <p className="text-2xl font-bold text-primary">4.9★</p>
                     <p className="text-xs text-gray-500">Customer Rating</p>
                   </div>
                 </div>
               </motion.div>
-
-              {/* Decorative Elements */}
-              <div className="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-20 blur-xl animate-pulse"></div>
-              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full opacity-20 blur-xl animate-pulse"></div>
             </div>
           </motion.div>
         </div>
 
         {/* Stats Section */}
         <motion.div 
-          className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-8 lg:p-12 text-white relative overflow-hidden"
+          className="bg-accent rounded-3xl p-8 lg:p-12 text-white relative overflow-hidden"
           variants={statsVariants}
           initial="hidden"
           whileInView="visible"
@@ -460,7 +375,7 @@ const AboutSection = () => {
               <h3 className="text-2xl lg:text-3xl font-bold mb-4">
                 Trusted by Thousands Across Sri Lanka
               </h3>
-              <p className="text-blue-100 text-lg">
+              <p className="text-black text-lg">
                 Numbers that speak for our commitment to excellence
               </p>
             </div>
@@ -477,7 +392,7 @@ const AboutSection = () => {
                   viewport={{ once: true }}
                 >
                   <div className="text-3xl lg:text-4xl font-bold mb-2">{stat.number}</div>
-                  <div className="text-blue-100 text-sm lg:text-base">{stat.label}</div>
+                  <div className="text-black text-sm lg:text-base">{stat.label}</div>
                 </motion.div>
               ))}
             </div>
@@ -486,12 +401,16 @@ const AboutSection = () => {
 
         {/* Swipe-to-Book CTA Section */}
         <motion.div 
-          className="text-center mt-16"
+          className="text-center"
           variants={ctaVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
         >
+            {/* Helper Text */}
+            <p className="text-sm text-gray-500 mt-4 mb-4">
+              Book your next trip with confidence
+            </p>
           <div className="max-w-md mx-auto">
             {/* Swipe Container */}
             <div 
@@ -562,11 +481,6 @@ const AboutSection = () => {
                 </motion.div>
               )}
             </div>
-
-            {/* Helper Text */}
-            <p className="text-sm text-gray-500 mt-4">
-              Book your next trip with confidence
-            </p>
           </div>
         </motion.div>
       </div>

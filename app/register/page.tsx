@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft, Bus, Shield, Users, Star, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
+import { useAuth } from '@/contexts/AuthContext';
+import {toast} from 'sonner';
 export default function RegisterPage() {
+  const { register } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -17,25 +19,88 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<any[]>([]);
+  const [generalError, setGeneralError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Registration attempt:', formData);
+    
+    if (formData.password !== formData.confirmPassword) {
+      setGeneralError('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    setErrors([]);
+    setGeneralError('');
+
+    const result = await register({
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password
+    });
+    
+    if (!result.success) {
+      if (result.errors) {
+        setErrors(result.errors);
+        toast.error('Please fix the highlighted errors and try again.');
+      } else {
+        setGeneralError(result.message);
+        toast.error("")
+      }
+    }
+    toast.success('Account created successfully! You can now log in.');
+    setLoading(false);
+  };
+
+  const getFieldError = (fieldName: string) => {
+    const error = errors.find(err => err.field === fieldName);
+    return error ? error.message : '';
   };
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-accent rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-primary rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
 
+      {/* Back Button */}
+      <div className="absolute top-6 left-6 z-50">
+        <Link href="/" className="group">
+          <Button 
+            variant="outline" 
+            className="bg-white/80 backdrop-blur-md border-white/30 hover:bg-white/90 transition-all duration-300 shadow-lg"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+            Back to Home
+          </Button>
+        </Link>
+      </div>
 
       <div className="flex min-h-screen relative z-10">
         {/* Left Side - Brand Container */}
         <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative">
-          <div className="w-full bg-primary p-12 flex flex-col justify-center relative overflow-hidden">
-
+          <div className="w-full bg-gradient-to-br from-accent via-primary to-accent p-12 flex flex-col justify-center relative overflow-hidden">
+            {/* Decorative Elements */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-white rounded-full blur-2xl"></div>
+              <div className="absolute bottom-1/4 left-1/4 w-48 h-48 bg-white rounded-full blur-2xl"></div>
+            </div>
 
             {/* Content */}
             <div className="relative z-10 text-white max-w-lg">
               <div className="mb-12">
+                <div className="flex items-center space-x-3 mb-8">
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-lg rounded-2xl flex items-center justify-center">
+                    <Bus className="w-8 h-8 text-white" />
+                  </div>
+                  <h1 className="text-4xl font-bold">Vijitha Travels</h1>
+                </div>
                 <h2 className="text-5xl font-bold leading-tight mb-6">
                   Join Our
                   <br />
@@ -105,32 +170,31 @@ export default function RegisterPage() {
         <div className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-6 lg:p-12">
           <div className="w-full max-w-md">
             {/* Mobile Header */}
-            <div className=" text-center mb-8">
-              
-
-      {/* Back Button */}
-      <div className="absolute z-50 mb-10">
-        <Link href="/" className="group">
-          <Button 
-            variant="outline" 
-            className="bg-white/80 backdrop-blur-md border-white/30 hover:bg-white/90 transition-all duration-300 shadow-lg"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Back to Home
-          </Button>
-        </Link>
-      </div>
+            <div className="lg:hidden text-center mb-8">
+              <div className="flex items-center justify-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+                  <Bus className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold text-gray-800">Vijitha Travels</h1>
+              </div>
             </div>
 
             {/* Registration Form Card */}
             <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/30 p-8 lg:p-10">
               {/* Form Header */}
               <div className="text-center mb-8">
-                <h2 className="text-3xl lg:text-4xl font-bold bg-primary bg-clip-text text-transparent mb-3">
+                <h2 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
                   Create Account
                 </h2>
                 <p className="text-gray-600 text-lg">Join thousands of happy travelers</p>
               </div>
+
+              {/* Error Messages */}
+              {generalError && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-6">
+                  {generalError}
+                </div>
+              )}
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -147,10 +211,13 @@ export default function RegisterPage() {
                         required
                         value={formData.firstName}
                         onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                        className="pl-12 h-12 rounded-xl border-2 border-gray-200 focus:border-primary bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-400"
+                        className={`pl-12 h-12 rounded-xl border-2 ${getFieldError('firstName') ? 'border-red-300' : 'border-gray-200'} focus:border-primary bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-400`}
                         placeholder="First name"
                       />
                     </div>
+                    {getFieldError('firstName') && (
+                      <p className="text-red-500 text-xs mt-1">{getFieldError('firstName')}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-700">
@@ -163,10 +230,13 @@ export default function RegisterPage() {
                         required
                         value={formData.lastName}
                         onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                        className="pl-12 h-12 rounded-xl border-2 border-gray-200 focus:border-primary bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-400"
+                        className={`pl-12 h-12 rounded-xl border-2 ${getFieldError('lastName') ? 'border-red-300' : 'border-gray-200'} focus:border-primary bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-400`}
                         placeholder="Last name"
                       />
                     </div>
+                    {getFieldError('lastName') && (
+                      <p className="text-red-500 text-xs mt-1">{getFieldError('lastName')}</p>
+                    )}
                   </div>
                 </div>
 
@@ -182,10 +252,13 @@ export default function RegisterPage() {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="pl-12 h-12 rounded-xl border-2 border-gray-200 focus:border-primary bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-400"
+                      className={`pl-12 h-12 rounded-xl border-2 ${getFieldError('email') ? 'border-red-300' : 'border-gray-200'} focus:border-primary bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-400`}
                       placeholder="Enter your email address"
                     />
                   </div>
+                  {getFieldError('email') && (
+                    <p className="text-red-500 text-xs mt-1">{getFieldError('email')}</p>
+                  )}
                 </div>
 
                 {/* Phone */}
@@ -200,10 +273,13 @@ export default function RegisterPage() {
                       required
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="pl-12 h-12 rounded-xl border-2 border-gray-200 focus:border-primary bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-400"
+                      className={`pl-12 h-12 rounded-xl border-2 ${getFieldError('phone') ? 'border-red-300' : 'border-gray-200'} focus:border-primary bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-400`}
                       placeholder="+94 XX XXX XXXX"
                     />
                   </div>
+                  {getFieldError('phone') && (
+                    <p className="text-red-500 text-xs mt-1">{getFieldError('phone')}</p>
+                  )}
                 </div>
 
                 {/* Password */}
@@ -218,7 +294,7 @@ export default function RegisterPage() {
                       required
                       value={formData.password}
                       onChange={(e) => setFormData({...formData, password: e.target.value})}
-                      className="pl-12 pr-12 h-12 rounded-xl border-2 border-gray-200 focus:border-primary bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-400"
+                      className={`pl-12 pr-12 h-12 rounded-xl border-2 ${getFieldError('password') ? 'border-red-300' : 'border-gray-200'} focus:border-primary bg-white/50 backdrop-blur-sm text-gray-800 placeholder-gray-400`}
                       placeholder="Create a strong password"
                     />
                     <button
@@ -229,6 +305,9 @@ export default function RegisterPage() {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  {getFieldError('password') && (
+                    <p className="text-red-500 text-xs mt-1">{getFieldError('password')}</p>
+                  )}
                 </div>
 
                 {/* Confirm Password */}
@@ -278,9 +357,10 @@ export default function RegisterPage() {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-14 bg-primary hover:from-accent hover:to-primary text-white rounded-xl text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  disabled={loading}
+                  className="w-full h-14 bg-gradient-to-r from-primary to-accent hover:from-accent hover:to-primary text-white rounded-xl text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
-                  Create Your Account
+                  {loading ? 'Creating Account...' : 'Create Your Account'}
                 </Button>
               </form>
 

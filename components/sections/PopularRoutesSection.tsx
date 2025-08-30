@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { MapPin, Clock, Star, ArrowRight, Zap, Shield, Wifi, Coffee, Car, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 const PopularRoutesSection = () => {
   const routes = [
@@ -55,7 +56,7 @@ const PopularRoutesSection = () => {
         </div>
 
         {/* Routes - Hidden on mobile */}
-        <div className="hidden lg:block">
+        <div className="block">
           <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
             {routes.map((route, index) => (
               <div
@@ -146,10 +147,12 @@ const PopularRoutesSection = () => {
                         ))}
                       </div>
 
+                      <Link href='/booking'>
                       <Button className="w-full bg-primary hover:from-accent hover:to-primary text-white rounded-2xl py-4 text-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl group">
                         Book Your Journey
                         <ArrowRight className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" />
                       </Button>
+                      </Link>
                     </div>
                   </div>
                 </div>

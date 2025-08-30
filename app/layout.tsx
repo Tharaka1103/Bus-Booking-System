@@ -6,7 +6,8 @@ import Footer from '@/components/Footer';
 import { Preloader } from '@/components/Preloader';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-
+import {AuthProvider} from '@/contexts/AuthContext';
+import { Toaster } from 'sonner';
 const inter = Inter({ 
   subsets: ['latin'], 
   variable: '--font-inter' 
@@ -42,6 +43,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <AuthProvider>
       <body className={`${inter.variable} ${quicksand.variable} ${lilitaone.variable}`}>
         {showPreloader ? (
           <Preloader />
@@ -49,10 +51,12 @@ export default function RootLayout({
           <>
             {!shouldHideHeaderFooter && <Header />}
             {children}
+            <Toaster position="bottom-right" richColors />
             {!shouldHideHeaderFooter && <Footer />}
           </>
         )}
       </body>
+      </AuthProvider>
     </html>
   );
 }

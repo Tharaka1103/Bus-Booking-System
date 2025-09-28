@@ -18,7 +18,6 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
-  const [isScrolled, setIsScrolled] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
@@ -31,15 +30,6 @@ const Header = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 80);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 // Close user menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -60,50 +50,38 @@ const Header = () => {
   };
 
   const navItems = [
-    { name: 'Home', href: '/' },
-    { name: 'Routes', href: '#routes' },
-    { name: 'About', href: '#about' },
-    { name: 'Services', href: '#services' },
-    { name: 'Contact', href: '#contact' },
+    { name: 'HOME', href: '/' },
+    { name: 'ROUTES', href: '#routes' },
+    { name: 'ABOUT', href: '#about' },
+    { name: 'SERVICES', href: '#services' },
+    { name: 'CONTACT', href: '#contact' },
   ];
 
   return (
-    <header className={`shadow-lg sticky top-0 z-50 transition-all duration-500 ease-in-out ${
-      isScrolled ? 'shadow-xl backdrop-blur-lg' : 'shadow-lg'
-    }`}>
+    <header className={`sticky top-5 h-0 z-50 transition-all duration-500 ease-in-out`}>
 
       {/* Main header */}
-      <div className={`container mx-auto px-4 transition-all duration-500 ease-in-out ${
-        isScrolled ? 'py-2 md:py-3 bg-transparent backdrop-blur-lg text-white' : 'py-3 md:py-4 px-10 bg-white '
-      }`}>
+      <div className={`container mx-auto px-4 transition-all duration-500 ease-in-out bg-transparent`}>
         <div className="flex justify-between items-center h-full">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="transition-all duration-300 ease-in-out">
-              <h1 className={`font-bold text-primary transition-all duration-500 ease-in-out group-hover:text-blue-700 ${
-                isScrolled ? 'text-xl' : 'text-2xl'
-              }`}>
+              <h1 className={`font-bold text-primary transition-all duration-500 ease-in-out group-hover:text-blue-700 `}>
                 Vijitha Travels
               </h1>
-              <p className={`text-gray-600 transition-all duration-500 ease-in-out group-hover:text-gray-800 ${
-                isScrolled ? 'text-xs opacity-80 hidden' : 'text-sm opacity-100'
-              }`}>
+              <p className={`text-gray-600 transition-all duration-500 ease-in-out group-hover:text-gray-800`}>
                 Your Journey, Our Priority
               </p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center justify-center space-x-8">
+          <nav className="hidden lg:flex items-center justify-center space-x-8 bg-white/40 px-5 py-2 gap-6 rounded-full backdrop-blur-lg  border border-black/20">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`font-medium transition-all duration-300 ease-in-out relative group ${
-                  isScrolled 
-                    ? 'text-black hover:text-primary text-lg' 
-                    : 'text-black hover:text-primary text-md'
-                }`}
+                className={`font-medium transition-all duration-300 ease-in-out relative group `}
               >
                 {item.name}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
@@ -163,17 +141,6 @@ const Header = () => {
                         <span>Dashboard</span>
                       </Link>
 
-                      {user?.role === 'user' && (
-                        <Link
-                          href="/my-bookings"
-                          className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <Calendar className="w-4 h-4" />
-                          <span>My Bookings</span>
-                        </Link>
-                      )}
-
                       <Link
                         href="/profile"
                         className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors"
@@ -201,13 +168,8 @@ const Header = () => {
               /* Login/Register Buttons */
               <div className="hidden md:flex items-center space-x-3">
                 <Link href="/login">
-                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
-                    Login
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button className="bg-primary text-white hover:from-accent hover:to-primary">
-                    Register
+                  <Button className="border-primary text-white hover:bg-primary hover:text-white rounded-full px-10 py-5 cursor-pointer">
+                    SIGNUP
                   </Button>
                 </Link>
               </div>
@@ -216,18 +178,16 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <button
-            className={`lg:hidden p-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-gray-100 ${
-              isScrolled ? 'p-1.5' : 'p-2'
-            }`}
+            className={`lg:hidden p-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-gray-100 `}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <div className="relative">
               <Menu className={`transition-all text-black duration-300 ease-in-out ${
                 isMenuOpen ? 'opacity-0 rotate-45 scale-0' : 'opacity-100 rotate-0 scale-100'
-              } ${isScrolled ? 'w-5 h-5' : 'w-6 h-6'}`} />
+              }`} />
               <X className={`absolute top-0 left-0 text-black transition-all duration-300 ease-in-out ${
                 isMenuOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-45 scale-0'
-              } ${isScrolled ? 'w-5 h-5' : 'w-6 h-6'}`} />
+              } `} />
             </div>
           </button>
         </div>
@@ -253,11 +213,6 @@ const Header = () => {
                   <Link href="/login" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-white">
                       Login
-                    </Button>
-                  </Link>
-                  <Link href="/register" onClick={() => setIsMenuOpen(false)}>
-                    <Button className="w-full bg-gradient-to-r from-primary to-accent text-white">
-                      Register
                     </Button>
                   </Link>
                 </div>
@@ -291,14 +246,6 @@ const Header = () => {
                       </Button>
                     </Link>
                     
-                    {user?.role === 'user' && (
-                      <Link href="/my-bookings" onClick={() => setIsMenuOpen(false)}>
-                        <Button variant="outline" className="w-full justify-start text-black">
-                          <Calendar className="w-4 h-4 mr-2" />
-                          My Bookings
-                        </Button>
-                      </Link>
-                    )}
                     
                     <Button
                       onClick={handleLogout}

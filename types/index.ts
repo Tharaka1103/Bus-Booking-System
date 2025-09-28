@@ -1,118 +1,146 @@
-import { Document } from 'mongoose';
-
-export interface IUser extends Document {
+export interface IUser {
   _id: string;
+  email: string;
+  password: string;
   firstName: string;
   lastName: string;
-  email: string;
   phone: string;
-  password: string;
-  role: 'user' | 'admin';
-  avatar?: string;
+  role: 'super_admin' | 'admin' | 'manager';
   isActive: boolean;
+  twoFactorEnabled: boolean;
+  twoFactorSecret?: string;
   lastLogin?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  comparePassword(candidatePassword: string): Promise<boolean>;
-}
-
-export interface IBooking extends Document {
-  _id: string;
-  user: string | IUser;
-  from: string;
-  to: string;
-  departureDate: Date;
-  departureTime: string;
-  passengers: number;
-  seatNumbers: string[];
-  totalAmount: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  paymentStatus: 'pending' | 'paid' | 'refunded';
-  bookingReference: string;
+  createdBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface IInquiry extends Document {
+// types/index.ts (update the existing file)
+
+export interface IRoute {
   _id: string;
   name: string;
-  email: string;
-  phone: string;
-  subject: string;
-  message: string;
-  status: 'new' | 'in-progress' | 'resolved' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  assignedTo?: string | IUser;
-  response?: string;
+  fromLocation: string;
+  toLocation: string;
+  pickupLocations: string[]; // Added pickup locations
+  distance: number;
+  duration: number;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface AuthRequest {
-  user?: IUser;
+export interface IBus {
+  _id: string;
+  busNumber: string;
+  type: 'luxury' | 'semi_luxury' | 'normal';
+  capacity: number;
+  amenities: string[];
+  isActive: boolean;
+  routeId?: string | IRoute; // Can be populated with route data
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface LoginRequest {
-  email: string;
-  password: string;
+// Add these new request types
+export interface CreateRouteRequest {
+  name: string;
+  fromLocation: string;
+  toLocation: string;
+  pickupLocations: string[];
+  distance: number;
+  duration: number;
 }
 
-export interface RegisterRequest {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  password: string;
+export interface UpdateRouteRequest {
+  name?: string;
+  fromLocation?: string;
+  toLocation?: string;
+  pickupLocations?: string[];
+  distance?: number;
+  duration?: number;
+  isActive?: boolean;
 }
 
-export interface UpdateProfileRequest {
-  firstName?: string;
-  lastName?: string;
-  phone?: string;
-  avatar?: string;
+export interface CreateBusRequest {
+  busNumber: string;
+  type: 'luxury' | 'semi_luxury' | 'normal';
+  capacity: number;
+  amenities: string[];
+  routeId?: string;
 }
 
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
+export interface UpdateBusRequest {
+  busNumber?: string;
+  type?: 'luxury' | 'semi_luxury' | 'normal';
+  capacity?: number;
+  amenities?: string[];
+  routeId?: string;
+  isActive?: boolean;
+}
+
+export interface IBooking {
+  _id: string;
+  userId: object;
+  busId: object;
+  routeId: object;
+  passengerName: string;
+  passengerPhone: string;
+  seatNumbers: number[];
+  travelDate: Date;
+  totalAmount: number;
+  status: 'confirmed' | 'cancelled' | 'completed';
+  paymentStatus: 'pending' | 'paid' | 'refunded';
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
   data?: T;
-  errors?: any[];
+  errors?: ValidationError[];
 }
 
-export interface DashboardStats {
-  totalUsers: number;
-  totalAdmins: number;
-  totalBookings: number;
-  pendingBookings: number;
-  confirmedBookings: number;
-  totalInquiries: number;
-  newInquiries: number;
+export interface ValidationError {
+  field: string;
+  message: string;
 }
 
-export interface UserDashboardStats {
-  totalBookings: number;
-  pendingBookings: number;
-  confirmedBookings: number;
-  completedBookings: number;
+export interface LoginRequest {
+  email: string;
+  password: string;
+  twoFactorCode?: string;
 }
 
-export interface PaginationQuery {
-  page?: string;
-  limit?: string;
-  status?: string;
-  priority?: string;
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  role: 'admin' | 'manager';
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  pagination: {
-    current: number;
-    pages: number;
-    total: number;
-  };
+export interface UpdateUserRequest {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  role?: 'admin' | 'manager';
+  isActive?: boolean;
+  password?: string;
 }
+
+export interface TwoFactorSetupRequest {
+  pin: string;
+}
+
+export interface PermissionMap {
+  [key: string]: string[];
+}
+
+export const PERMISSIONS: PermissionMap = {
+  super_admin: ['users:read', 'users:write', 'users:delete', 'routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
+  admin: ['routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
+  manager: ['bookings:read', 'bookings:write', 'bookings:delete']
+};

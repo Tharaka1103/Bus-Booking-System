@@ -33,7 +33,7 @@ export default function RootLayout({
   const pathname = usePathname();
 
   // Define routes where header and footer should be hidden
-  const hideHeaderFooterRoutes = ['/login', '/register', '/signin', '/signup'];
+  const hideHeaderFooterRoutes = ['/login', '/register', '/signin', '/signup', '/dashboard/manager', '/dashboard/admin', '/dashboard/super-admin', '/dashboard/users', '/dashboard/settings', '/dashboard/buses', '/dashboard/routes'];
   const shouldHideHeaderFooter = hideHeaderFooterRoutes.includes(pathname);
 
   useEffect(() => {

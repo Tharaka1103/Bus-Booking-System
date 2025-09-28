@@ -80,13 +80,13 @@ h1{
     --radius: 0.65rem;
 
   /* Neutral Backgrounds */
-  --background: #FFFBDE; /* soft cream */
+  --background: #e0f2f7; /* soft cream */
   --foreground: #1e1e1e; /* dark readable text */
 
-  --card: #FFFBDE;
+  --card: #e0f2f7;
   --card-foreground: #1e1e1e;
 
-  --popover: #FFFBDE;
+  --popover: #e0f2f7;
   --popover-foreground: #1e1e1e;
 
   /* Brand Colors */
@@ -177,4 +177,41 @@ h1{
   body {
     @apply bg-background text-foreground;
   }
+}
+/* Ensure proper layout */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.dashboard-sidebar {
+  flex-shrink: 0;
+}
+
+.dashboard-main {
+  flex: 1;
+  min-width: 0; /* Prevents flex item from overflowing */
+}
+
+/* Ensure proper scrolling */
+.sidebar-nav {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: #f7fafc;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
 }

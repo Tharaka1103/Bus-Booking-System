@@ -4,7 +4,7 @@ import User from '@/models/User';
 import { verifyToken } from '@/lib/auth';
 import { ApiResponse } from '@/types';
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     await connectToDatabase();
 
@@ -14,31 +14,34 @@ export async function GET(request: NextRequest) {
     if (!token) {
       return NextResponse.json<ApiResponse>({
         success: false,
-        message: 'No token provided'
+        message: 'Unauthorized'
       }, { status: 401 });
     }
 
     const decoded = verifyToken(token);
-    const user = await User.findById(decoded.userId).select('-password -twoFactorSecret');
+    const user = await User.findById(decoded.userId);
 
-    if (!user || !user.isActive) {
+    if (!user) {
       return NextResponse.json<ApiResponse>({
         success: false,
         message: 'User not found'
       }, { status: 404 });
     }
 
+    user.twoFactorEnabled = false;
+    user.twoFactorSecret = undefined;
+    await user.save();
+
     return NextResponse.json<ApiResponse>({
       success: true,
-      message: 'User data retrieved',
-      data: { user }
+      message: 'Two-factor authentication disabled successfully'
     });
 
   } catch (error) {
-    console.error('Auth verification error:', error);
+    console.error('Two-factor disable error:', error);
     return NextResponse.json<ApiResponse>({
       success: false,
-      message: 'Invalid token'
-    }, { status: 401 });
+      message: 'Internal server error'
+    }, { status: 500 });
   }
 }

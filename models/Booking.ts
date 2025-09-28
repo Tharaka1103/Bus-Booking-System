@@ -1,67 +1,57 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, model } from 'mongoose';
 import { IBooking } from '@/types';
 
 const bookingSchema = new Schema<IBooking>({
-  user: {
+  userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  from: {
+  busId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Bus',
+    required: true
+  },
+  routeId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Route',
+    required: true
+  },
+  passengerName: {
     type: String,
-    required: [true, 'Origin is required']
+    required: true,
+    trim: true
   },
-  to: {
+  passengerPhone: {
     type: String,
-    required: [true, 'Destination is required']
-  },
-  departureDate: {
-    type: Date,
-    required: [true, 'Departure date is required']
-  },
-  departureTime: {
-    type: String,
-    required: [true, 'Departure time is required']
-  },
-  passengers: {
-    type: Number,
-    required: [true, 'Number of passengers is required'],
-    min: 1,
-    max: 10
+    required: true,
+    trim: true
   },
   seatNumbers: [{
-    type: String
+    type: Number,
+    required: true
   }],
+  travelDate: {
+    type: Date,
+    required: true
+  },
   totalAmount: {
     type: Number,
-    required: [true, 'Total amount is required']
+    required: true,
+    min: 0
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
-    default: 'pending'
+    enum: ['confirmed', 'cancelled', 'completed'],
+    default: 'confirmed'
   },
   paymentStatus: {
     type: String,
     enum: ['pending', 'paid', 'refunded'],
     default: 'pending'
-  },
-  bookingReference: {
-    type: String,
-    unique: true
   }
 }, {
   timestamps: true
 });
 
-// Generate booking reference before saving
-bookingSchema.pre('save', function(next) {
-  if (!this.bookingReference) {
-    this.bookingReference = 'VT' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase();
-  }
-  next();
-});
-
-const Booking = mongoose.models.Booking || mongoose.model<IBooking>('Booking', bookingSchema);
-
-export default Booking;
+export default mongoose.models.Booking || model<IBooking>('Booking', bookingSchema);

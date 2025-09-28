@@ -1,24 +1,36 @@
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+import { IUser } from '@/types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_change_in_production';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
-export const generateToken = (userId: string): string => {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '24h' });
-};
+export function generateToken(user: IUser): string {
+  return jwt.sign(
+    {
+      userId: user._id,
+      email: user.email,
+      role: user.role
+    },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+}
 
-export const verifyToken = (token: string): { userId: string } => {
-  return jwt.verify(token, JWT_SECRET) as { userId: string };
-};
+export function verifyToken(token: string): any {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    throw new Error('Invalid token');
+  }
+}
 
-export const hashPassword = async (password: string): Promise<string> => {
-  const salt = await bcrypt.genSalt(12);
-  return bcrypt.hash(password, salt);
-};
+export function hasPermission(userRole: string, permission: string): boolean {
+  const rolePermissions = {
+    super_admin: ['users:read', 'users:write', 'users:delete', 'routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
+    admin: ['routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
+    manager: ['bookings:read', 'bookings:write', 'bookings:delete']
+  };
 
-export const comparePassword = async (
-  password: string,
-  hashedPassword: string
-): Promise<boolean> => {
-  return bcrypt.compare(password, hashedPassword);
-};
+  const permissions = rolePermissions[userRole as keyof typeof rolePermissions] || [];
+  return permissions.includes(permission);
+}

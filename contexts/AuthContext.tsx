@@ -2,19 +2,24 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { IUser, ApiResponse } from '@/types';
+import { IUser, ApiResponse, LoginRequest } from '@/types';
 
 interface AuthContextType {
   user: IUser | null;
-  token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
-  register: (userData: any) => Promise<{ success: boolean; message: string; errors?: any[] }>;
+  login: (email: string, password: string, twoFactorCode?: string) => Promise<{ 
+    success: boolean; 
+    message: string; 
+    requiresTwoFactor?: boolean;
+  }>;
   logout: () => void;
   updateProfile: (profileData: any) => Promise<{ success: boolean; message: string; errors?: any[] }>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message: string; errors?: any[] }>;
+  setupTwoFactor: (pin: string) => Promise<{ success: boolean; message: string }>;
+  disableTwoFactor: () => Promise<{ success: boolean; message: string }>;
   isAuthenticated: () => boolean;
   hasRole: (role: string) => boolean;
+  hasPermission: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,163 +36,129 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const PERMISSIONS = {
+  super_admin: ['users:read', 'users:write', 'users:delete', 'routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
+  admin: ['routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
+  manager: ['bookings:read', 'bookings:write', 'bookings:delete']
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<IUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
   const router = useRouter();
 
   // Initialize auth state
   useEffect(() => {
-    const storedToken = localStorage.getItem('authToken');
-    const storedUser = localStorage.getItem('authUser');
-
-    if (storedToken && storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setToken(storedToken);
-        setUser(parsedUser);
-        
-        // Verify token is still valid
-        verifyToken(storedToken);
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        logout();
-      }
-    }
-    setLoading(false);
+    checkAuthState();
   }, []);
 
-  // Verify token validity
-  const verifyToken = async (authToken: string) => {
+  const checkAuthState = async () => {
     try {
       const response = await fetch('/api/auth/me', {
+        credentials: 'include',
         headers: {
-          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Token verification failed');
-      }
-
-      const data: ApiResponse<{ user: IUser }> = await response.json();
-      if (data.success && data.data) {
-        setUser(data.data.user);
-        localStorage.setItem('authUser', JSON.stringify(data.data.user));
-      } else {
-        logout();
+      if (response.ok) {
+        const data: ApiResponse<{ user: IUser }> = await response.json();
+        if (data.success && data.data) {
+          setUser(data.data.user);
+        }
       }
     } catch (error) {
-      console.error('Token verification error:', error);
-      logout();
+      console.error('Auth check error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Login function
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, twoFactorCode?: string) => {
     try {
+      const loginData: LoginRequest = { email, password };
+      if (twoFactorCode) {
+        loginData.twoFactorCode = twoFactorCode;
+      }
+
+      console.log('🚀 Frontend login attempt:', { 
+        email, 
+        hasTwoFactorCode: !!twoFactorCode,
+        twoFactorCodeLength: twoFactorCode?.length || 0
+      });
+
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password })
+        credentials: 'include',
+        body: JSON.stringify(loginData)
       });
 
-      const data: ApiResponse<{ token: string; user: IUser }> = await response.json();
+      const data: ApiResponse<{ token: string; user: IUser; requiresTwoFactor?: boolean }> = await response.json();
 
-      if (data.success && data.data) {
-        const { token, user } = data.data;
-        
-        // Store in localStorage with expiration
-        const expirationTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 hours
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('authUser', JSON.stringify(user));
-        localStorage.setItem('authExpiration', expirationTime.toString());
-        
-        setToken(token);
-        setUser(user);
+      console.log('📡 Login response:', { 
+        success: data.success, 
+        message: data.message,
+        hasData: !!data.data,
+        requiresTwoFactor: data.data?.requiresTwoFactor,
+        responseStatus: response.status
+      });
+
+      // Check if 2FA is required (this can come in data even when success is false)
+      if (data.data?.requiresTwoFactor) {
+        console.log('🔒 Two-factor authentication required');
+        return { 
+          success: false, 
+          message: data.message, 
+          requiresTwoFactor: true 
+        };
+      }
+
+      // Check if login was successful
+      if (data.success && data.data?.user) {
+        console.log('✅ Login successful for user:', data.data.user.email);
+        setUser(data.data.user);
 
         // Redirect based on role
-        if (user.role === 'admin') {
-          router.push('/dashboard/admin');
-        } else {
-          router.push('/dashboard/user');
-        }
+        const dashboardRoute = `/dashboard/${data.data.user.role.replace('_', '-')}`;
+        console.log('🚀 Redirecting to:', dashboardRoute);
+        router.push(dashboardRoute);
 
         return { success: true, message: data.message };
       } else {
+        console.log('❌ Login failed:', data.message);
         return { success: false, message: data.message };
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('💥 Frontend login error:', error);
       return { success: false, message: 'Network error. Please try again.' };
     }
   };
 
-  // Register function
-  const register = async (userData: any) => {
+  const logout = async () => {
     try {
-      const response = await fetch('/api/auth/register', {
+      await fetch('/api/auth/logout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
+        credentials: 'include'
       });
-
-      const data: ApiResponse<{ token: string; user: IUser }> = await response.json();
-
-      if (data.success && data.data) {
-        const { token, user } = data.data;
-        
-        // Store in localStorage
-        const expirationTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 hours
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('authUser', JSON.stringify(user));
-        localStorage.setItem('authExpiration', expirationTime.toString());
-        
-        setToken(token);
-        setUser(user);
-
-        // Redirect based on role
-        if (user.role === 'admin') {
-          router.push('/dashboard/admin');
-        } else {
-          router.push('/dashboard/user');
-        }
-
-        return { success: true, message: data.message };
-      } else {
-        return { success: false, message: data.message, errors: data.errors };
-      }
     } catch (error) {
-      console.error('Registration error:', error);
-      return { success: false, message: 'Network error. Please try again.' };
+      console.error('Logout error:', error);
+    } finally {
+      setUser(null);
+      router.push('/login');
     }
   };
 
-  // Logout function
-  const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authUser');
-    localStorage.removeItem('authExpiration');
-    setToken(null);
-    setUser(null);
-    router.push('/');
-  };
-
-  // Update profile function
   const updateProfile = async (profileData: any) => {
     try {
       const response = await fetch('/api/auth/profile', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(profileData)
       });
 
@@ -195,7 +166,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (data.success && data.data) {
         setUser(data.data.user);
-        localStorage.setItem('authUser', JSON.stringify(data.data.user));
         return { success: true, message: data.message };
       } else {
         return { success: false, message: data.message, errors: data.errors };
@@ -206,15 +176,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Change password function
   const changePassword = async (currentPassword: string, newPassword: string) => {
     try {
       const response = await fetch('/api/auth/change-password', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({ currentPassword, newPassword })
       });
 
@@ -226,35 +195,76 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Check if user is authenticated
-  const isAuthenticated = (): boolean => {
-    if (!token || !user) return false;
-    
-    const expirationTime = localStorage.getItem('authExpiration');
-    if (expirationTime && new Date().getTime() > parseInt(expirationTime)) {
-      logout();
-      return false;
+  const setupTwoFactor = async (pin: string) => {
+    try {
+      const response = await fetch('/api/auth/two-factor/setup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ pin })
+      });
+
+      const data: ApiResponse = await response.json();
+      
+      if (data.success && user) {
+        setUser({ ...user, twoFactorEnabled: true });
+      }
+
+      return { success: data.success, message: data.message };
+    } catch (error) {
+      console.error('Setup two-factor error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
     }
-    
-    return true;
   };
 
-  // Check if user has specific role
+  const disableTwoFactor = async () => {
+    try {
+      const response = await fetch('/api/auth/two-factor/disable', {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      const data: ApiResponse = await response.json();
+      
+      if (data.success && user) {
+        setUser({ ...user, twoFactorEnabled: false });
+      }
+
+      return { success: data.success, message: data.message };
+    } catch (error) {
+      console.error('Disable two-factor error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  };
+
+  const isAuthenticated = (): boolean => {
+    return !!user;
+  };
+
   const hasRole = (role: string): boolean => {
     return user?.role === role;
   };
 
+  const hasPermission = (permission: string): boolean => {
+    if (!user) return false;
+    const userPermissions = PERMISSIONS[user.role as keyof typeof PERMISSIONS] || [];
+    return userPermissions.includes(permission);
+  };
+
   const value: AuthContextType = {
     user,
-    token,
     loading,
     login,
-    register,
     logout,
     updateProfile,
     changePassword,
+    setupTwoFactor,
+    disableTwoFactor,
     isAuthenticated,
-    hasRole
+    hasRole,
+    hasPermission
   };
 
   return (

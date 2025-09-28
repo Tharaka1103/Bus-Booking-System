@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "create-admin": "ts-node scripts/createDefaultAdmin.ts"
+    "create-admin": "node scripts/createDefaultAdmin.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -45,7 +45,8 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.1",
     "embla-carousel-react": "^8.6.0",
-    "framer-motion": "^12.23.12",
+    "framer-motion": "^12.23.22",
+    "gsap": "^3.13.0",
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.541.0",

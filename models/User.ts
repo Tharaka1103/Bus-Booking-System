@@ -1,51 +1,56 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { IUser } from '@/types';
 
 const userSchema = new Schema<IUser>({
-  firstName: {
-    type: String,
-    required: [true, 'First name is required'],
-    trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
-  },
-  lastName: {
-    type: String,
-    required: [true, 'Last name is required'],
-    trim: true,
-    maxlength: [50, 'Last name cannot exceed 50 characters']
-  },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: true,
     unique: true,
     lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
-  },
-  phone: {
-    type: String,
-    required: [true, 'Phone number is required'],
+    trim: true
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters']
+    required: true,
+    minlength: 6
+  },
+  firstName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  lastName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  phone: {
+    type: String,
+    required: true,
+    trim: true
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
-  },
-  avatar: {
-    type: String,
-    default: ''
+    enum: ['super_admin', 'admin', 'manager'],
+    required: true
   },
   isActive: {
     type: Boolean,
     default: true
   },
-  lastLogin: {
-    type: Date
+  twoFactorEnabled: {
+    type: Boolean,
+    default: false
+  },
+  twoFactorSecret: {
+    type: String,
+    select: false
+  },
+  lastLogin: Date,
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, {
   timestamps: true
@@ -66,16 +71,19 @@ userSchema.pre('save', async function(next) {
 
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
-  return await bcrypt.compare(candidatePassword, this.password);
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Remove password from JSON output
-userSchema.methods.toJSON = function() {
-  const userObject = this.toObject();
-  delete userObject.password;
-  return userObject;
+// Hash two factor secret
+userSchema.methods.hashTwoFactorSecret = async function(secret: string): Promise<string> {
+  const salt = await bcrypt.genSalt(12);
+  return bcrypt.hash(secret, salt);
 };
 
-const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema);
+// Compare two factor secret
+userSchema.methods.compareTwoFactorSecret = async function(candidateSecret: string): Promise<boolean> {
+  if (!this.twoFactorSecret) return false;
+  return bcrypt.compare(candidateSecret, this.twoFactorSecret);
+};
 
-export default User;
+export default mongoose.models.User || model<IUser>('User', userSchema);

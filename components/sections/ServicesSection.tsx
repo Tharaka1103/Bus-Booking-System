@@ -76,7 +76,7 @@ const ServicesSection = () => {
 
         {/* Additional CTA Section */}
         <div className="text-center mt-16">
-          <div className="bg-accent rounded-2xl p-8 max-w-4xl mx-auto">
+          <div className="bg-sky-200 rounded-2xl p-8 mx-auto">
             <h3 className="text-2xl font-bold text-gray-800 mb-4">
               Ready to Experience Premium Travel?
             </h3>

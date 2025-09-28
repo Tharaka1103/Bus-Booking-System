@@ -9,11 +9,15 @@ import { ApiResponse, UpdateBookingRequest } from '@/types';
 // GET single booking
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params; // Await the params here
+    
     const token = request.cookies.get('authToken')?.value || 
-                  request.headers.get('authorization')?.replace('Bearer ', '');    if (!token) {
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
       return NextResponse.json<ApiResponse>({
         success: false,
         message: 'Unauthorized'
@@ -29,7 +33,7 @@ export async function GET(
     }
 
     await connectToDatabase();
-    const booking = await Booking.findById(params.id)
+    const booking = await Booking.findById(id)
       .populate('userId', 'firstName lastName email phone')
       .populate('busId', 'busNumber type capacity')
       .populate('routeId', 'name fromLocation toLocation price');
@@ -57,11 +61,15 @@ export async function GET(
 // PUT update booking
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params; // Await the params here
+    
     const token = request.cookies.get('authToken')?.value || 
-                  request.headers.get('authorization')?.replace('Bearer ', '');    if (!token) {
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
       return NextResponse.json<ApiResponse>({
         success: false,
         message: 'Unauthorized'
@@ -80,7 +88,7 @@ export async function PUT(
     await connectToDatabase();
 
     const booking = await Booking.findByIdAndUpdate(
-      params.id,
+      id,
       body,
       { new: true, runValidators: true }
     )
@@ -111,11 +119,15 @@ export async function PUT(
 // DELETE booking (soft delete by changing status)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params; // Await the params here
+    
     const token = request.cookies.get('authToken')?.value || 
-                  request.headers.get('authorization')?.replace('Bearer ', '');    if (!token) {
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
       return NextResponse.json<ApiResponse>({
         success: false,
         message: 'Unauthorized'
@@ -133,7 +145,7 @@ export async function DELETE(
     await connectToDatabase();
     
     const booking = await Booking.findByIdAndUpdate(
-      params.id,
+      id,
       { status: 'cancelled' },
       { new: true }
     );

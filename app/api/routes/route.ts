@@ -9,22 +9,6 @@ import { ApiResponse, CreateRouteRequest, UpdateRouteRequest } from '@/types';
 // GET all routes
 export async function GET(request: NextRequest) {
   try {
-const token = request.cookies.get('authToken')?.value || 
-                  request.headers.get('authorization')?.replace('Bearer ', '');    if (!token) {
-      return NextResponse.json<ApiResponse>({
-        success: false,
-        message: 'Unauthorized'
-      }, { status: 401 });
-    }
-
-    const decoded = verifyToken(token);
-    if (!hasPermission(decoded.role, 'routes:read')) {
-      return NextResponse.json<ApiResponse>({
-        success: false,
-        message: 'Forbidden'
-      }, { status: 403 });
-    }
-
     await connectToDatabase();
     const routes = await Route.find().sort({ createdAt: -1 });
 

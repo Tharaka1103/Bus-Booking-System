@@ -1,5 +1,3 @@
-// app/api/buses/[id]/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import Bus from '@/models/Bus';
@@ -9,11 +7,14 @@ import { ApiResponse, UpdateBusRequest } from '@/types';
 // GET single bus
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get('authToken')?.value || 
-                  request.headers.get('authorization')?.replace('Bearer ', '');    if (!token) {
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
       return NextResponse.json<ApiResponse>({
         success: false,
         message: 'Unauthorized'
@@ -29,7 +30,7 @@ export async function GET(
     }
 
     await connectToDatabase();
-    const bus = await Bus.findById(params.id).populate('routeId');
+    const bus = await Bus.findById(id).populate('routeId');
 
     if (!bus) {
       return NextResponse.json<ApiResponse>({
@@ -54,11 +55,14 @@ export async function GET(
 // PUT update bus
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get('authToken')?.value || 
-                  request.headers.get('authorization')?.replace('Bearer ', '');    if (!token) {
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
       return NextResponse.json<ApiResponse>({
         success: false,
         message: 'Unauthorized'
@@ -77,7 +81,7 @@ export async function PUT(
     await connectToDatabase();
 
     const bus = await Bus.findByIdAndUpdate(
-      params.id,
+      id,
       body,
       { new: true, runValidators: true }
     ).populate('routeId');
@@ -111,11 +115,14 @@ export async function PUT(
 // DELETE bus
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get('authToken')?.value || 
-                  request.headers.get('authorization')?.replace('Bearer ', '');    if (!token) {
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
       return NextResponse.json<ApiResponse>({
         success: false,
         message: 'Unauthorized'
@@ -131,7 +138,7 @@ export async function DELETE(
     }
 
     await connectToDatabase();
-    const bus = await Bus.findByIdAndDelete(params.id);
+    const bus = await Bus.findByIdAndDelete(id);
 
     if (!bus) {
       return NextResponse.json<ApiResponse>({

@@ -7,9 +7,10 @@ import { ApiResponse, UpdateUserRequest } from '@/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectToDatabase();
 
     const token = request.cookies.get('authToken')?.value || 
@@ -31,7 +32,7 @@ export async function GET(
       }, { status: 403 });
     }
 
-    const user = await User.findById(params.id).select('-password -twoFactorSecret');
+    const user = await User.findById(id).select('-password -twoFactorSecret');
     
     if (!user) {
       return NextResponse.json<ApiResponse>({
@@ -57,9 +58,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectToDatabase();
 
     const token = request.cookies.get('authToken')?.value || 
@@ -93,7 +95,7 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    const user = await User.findById(params.id);
+    const user = await User.findById(id);
     if (!user) {
       return NextResponse.json<ApiResponse>({
         success: false,
@@ -114,7 +116,7 @@ export async function PUT(
     await user.save();
 
     // Return updated user data
-    const updatedUser = await User.findById(params.id).select('-password -twoFactorSecret');
+    const updatedUser = await User.findById(id).select('-password -twoFactorSecret');
 
     return NextResponse.json<ApiResponse>({
       success: true,
@@ -133,9 +135,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectToDatabase();
 
     const token = request.cookies.get('authToken')?.value || 
@@ -157,7 +160,7 @@ export async function DELETE(
       }, { status: 403 });
     }
 
-    const user = await User.findById(params.id);
+    const user = await User.findById(id);
     if (!user) {
       return NextResponse.json<ApiResponse>({
         success: false,
@@ -181,7 +184,7 @@ export async function DELETE(
       }, { status: 403 });
     }
 
-    await User.findByIdAndDelete(params.id);
+    await User.findByIdAndDelete(id);
 
     return NextResponse.json<ApiResponse>({
       success: true,

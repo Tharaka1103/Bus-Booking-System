@@ -9,6 +9,11 @@ const routeSchema = new Schema<IRoute>({
     required: true,
     trim: true
   },
+  price: {
+    type: Number,
+    required: true,
+    min: 0
+  },
   fromLocation: {
     type: String,
     required: true,

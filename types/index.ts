@@ -22,12 +22,69 @@ export interface IRoute {
   name: string;
   fromLocation: string;
   toLocation: string;
-  pickupLocations: string[]; // Added pickup locations
+  pickupLocations: string[];
   distance: number;
   duration: number;
+  price: number; // Add this if not already present
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface IBooking {
+  _id: string;
+  userId: string | IUser;
+  busId: string | IBus;
+  routeId: string | IRoute;
+  passengerName: string;
+  passengerPhone: string;
+  passengerEmail?: string;
+  seatNumbers: number[];
+  travelDate: Date;
+  pickupLocation?: string;
+  bookingDate: Date;
+  totalAmount: number;
+  status: 'confirmed' | 'cancelled' | 'completed';
+  paymentStatus: 'pending' | 'paid' | 'refunded';
+  paymentMethod?: string;
+  transactionId?: string;
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateBookingRequest {
+  busId: string;
+  routeId: string;
+  passengerName: string;
+  passengerPhone: string;
+  passengerEmail?: string;
+  seatNumbers: number[];
+  travelDate: string;
+  totalAmount: number;
+  paymentMethod?: string;
+  notes?: string;
+}
+
+export interface UpdateBookingRequest {
+  passengerName?: string;
+  passengerPhone?: string;
+  passengerEmail?: string;
+  seatNumbers?: number[];
+  travelDate?: string;
+  status?: 'confirmed' | 'cancelled' | 'completed';
+  paymentStatus?: 'pending' | 'paid' | 'refunded';
+  notes?: string;
+}
+
+export interface BookingFilters {
+  routeId?: string;
+  busId?: string;
+  status?: string;
+  paymentStatus?: string;
+  travelDate?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export interface IBus {
@@ -47,6 +104,7 @@ export interface CreateRouteRequest {
   name: string;
   fromLocation: string;
   toLocation: string;
+  price: number;
   pickupLocations: string[];
   distance: number;
   duration: number;
@@ -56,6 +114,7 @@ export interface UpdateRouteRequest {
   name?: string;
   fromLocation?: string;
   toLocation?: string;
+  price: number;
   pickupLocations?: string[];
   distance?: number;
   duration?: number;
@@ -79,21 +138,6 @@ export interface UpdateBusRequest {
   isActive?: boolean;
 }
 
-export interface IBooking {
-  _id: string;
-  userId: object;
-  busId: object;
-  routeId: object;
-  passengerName: string;
-  passengerPhone: string;
-  seatNumbers: number[];
-  travelDate: Date;
-  totalAmount: number;
-  status: 'confirmed' | 'cancelled' | 'completed';
-  paymentStatus: 'pending' | 'paid' | 'refunded';
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 export interface ApiResponse<T = any> {
   success: boolean;

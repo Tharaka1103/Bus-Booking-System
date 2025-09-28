@@ -354,7 +354,6 @@ export default function BusesPage() {
                                         <TableHead>Type</TableHead>
                                         <TableHead>Capacity</TableHead>
                                         <TableHead>Route</TableHead>
-                                        <TableHead>Amenities</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Actions</TableHead>
                                     </TableRow>
@@ -381,25 +380,12 @@ export default function BusesPage() {
                                             </TableCell>
                                             <TableCell>
                                                 {typeof bus.routeId === 'object' ? (
-                                                    <span className="font-medium">{bus.routeId.name}</span>
+                                                    <span className="font-medium">{bus.routeId?.name}</span>
                                                 ) : (
                                                     <span className="text-gray-400">No route assigned</span>
                                                 )}
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {bus.amenities.slice(0, 3).map((amenity, index) => (
-                                                        <Badge key={index} variant="secondary" className="text-xs">
-                                                            {amenity}
-                                                        </Badge>
-                                                    ))}
-                                                    {bus.amenities.length > 3 && (
-                                                        <Badge variant="outline" className="text-xs">
-                                                            +{bus.amenities.length - 3} more
-                                                        </Badge>
-                                                    )}
-                                                </div>
-                                            </TableCell>
+                                            
                                             <TableCell>
                                                 <Badge variant={bus.isActive ? 'default' : 'secondary'}>
                                                     {bus.isActive ? 'Active' : 'Inactive'}

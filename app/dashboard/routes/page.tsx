@@ -12,7 +12,8 @@ import {
     Clock,
     Route as RouteIcon,
     X,
-    MoreHorizontal
+    MoreHorizontal,
+    DollarSign
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,7 +72,8 @@ export default function RoutesPage() {
         toLocation: '',
         pickupLocations: [],
         distance: 0,
-        duration: 0
+        duration: 0,
+        price: 0
     });
     const [newPickupLocation, setNewPickupLocation] = useState('');
     const [formLoading, setFormLoading] = useState(false);
@@ -113,6 +115,7 @@ export default function RoutesPage() {
         if (!formData.toLocation.trim()) newErrors.toLocation = 'To location is required';
         if (formData.distance <= 0) newErrors.distance = 'Distance must be greater than 0';
         if (formData.duration <= 0) newErrors.duration = 'Duration must be greater than 0';
+        if (formData.price <= 0) newErrors.price = 'Price must be greater than 0';
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -180,7 +183,8 @@ export default function RoutesPage() {
             toLocation: route.toLocation,
             pickupLocations: route.pickupLocations,
             distance: route.distance,
-            duration: route.duration
+            duration: route.duration,
+            price: route.price || 0
         });
         setIsModalOpen(true);
     };
@@ -197,7 +201,8 @@ export default function RoutesPage() {
             toLocation: '',
             pickupLocations: [],
             distance: 0,
-            duration: 0
+            duration: 0,
+            price: 0
         });
         setEditingRoute(null);
         setIsModalOpen(false);
@@ -227,6 +232,9 @@ export default function RoutesPage() {
         route.fromLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
         route.toLocation.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Calculate total revenue from all routes
+    const totalRevenue = routes.reduce((sum, route) => sum + (route.price || 0), 0);
 
     if (!hasPermission('routes:read')) {
         return (
@@ -279,15 +287,15 @@ export default function RoutesPage() {
                     </Card>
                     <Card className="rounded-sm border-none">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Avg Distance</CardTitle>
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <CardTitle className="text-sm font-medium">Avg Price</CardTitle>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {routes.length > 0 
-                                    ? Math.round(routes.reduce((sum, route) => sum + route.distance, 0) / routes.length)
-                                    : 0
-                                } km
+                                ${routes.length > 0 
+                                    ? (totalRevenue / routes.length).toFixed(2)
+                                    : '0.00'
+                                }
                             </div>
                         </CardContent>
                     </Card>
@@ -337,6 +345,7 @@ export default function RoutesPage() {
                                         <TableHead>Pickup Locations</TableHead>
                                         <TableHead>Distance</TableHead>
                                         <TableHead>Duration</TableHead>
+                                        <TableHead>Price</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Actions</TableHead>
                                     </TableRow>
@@ -373,6 +382,12 @@ export default function RoutesPage() {
                                                 <div className="flex items-center">
                                                     <Clock className="w-4 h-4 mr-1 text-gray-400" />
                                                     {route.duration} min
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center font-medium">
+                                                    <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
+                                                    {route.price?.toFixed(2) || '0.00'}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -497,7 +512,7 @@ export default function RoutesPage() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-3 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="distance">Distance (km)</Label>
                                         <Input
@@ -514,7 +529,7 @@ export default function RoutesPage() {
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="duration">Duration (minutes)</Label>
+                                        <Label htmlFor="duration">Duration (min)</Label>
                                         <Input
                                             id="duration"
                                             type="number"
@@ -525,6 +540,21 @@ export default function RoutesPage() {
                                         />
                                         {errors.duration && (
                                             <p className="text-sm text-red-600">{errors.duration}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="price">Price ($)</Label>
+                                        <Input
+                                            id="price"
+                                            type="number"
+                                            value={formData.price}
+                                            onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                                            min="0"
+                                            step="0.01"
+                                            className={errors.price ? 'border-red-500' : ''}
+                                        />
+                                        {errors.price && (
+                                            <p className="text-sm text-red-600">{errors.price}</p>
                                         )}
                                     </div>
                                 </div>

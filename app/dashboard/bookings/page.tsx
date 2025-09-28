@@ -239,7 +239,7 @@ export default function BookingsPage() {
               <CreditCard className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${stats.revenue.toLocaleString()}</div>
+              <div className="text-2xl font-bold">LKR: {stats.revenue.toLocaleString()}/=</div>
             </CardContent>
           </Card>
         </div>
@@ -273,8 +273,9 @@ export default function BookingsPage() {
                       <TableHead>Booking ID</TableHead>
                       <TableHead>Passenger</TableHead>
                       <TableHead className="hidden md:table-cell">Route</TableHead>
-                      <TableHead className="hidden lg:table-cell">Travel Date</TableHead>
-                      <TableHead className="hidden sm:table-cell">Status</TableHead>
+                      <TableHead className="hidden md:table-cell">Travel Date</TableHead>
+                      <TableHead className="hidden md:table-cell">Booking Status</TableHead>
+                      <TableHead className="hidden md:table-cell">Payment Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -310,6 +311,10 @@ export default function BookingsPage() {
                             <Badge className={getStatusBadgeColor(booking.status)}>
                               {booking.status}
                             </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <div className="space-y-1">
                             <Badge className={getPaymentBadgeColor(booking.paymentStatus)}>
                               {booking.paymentStatus}
                             </Badge>
@@ -434,7 +439,7 @@ export default function BookingsPage() {
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-gray-500">Total Amount</p>
-                    <p className="font-medium text-lg">${selectedBooking.totalAmount}</p>
+                    <p className="font-medium text-lg">LKR: {selectedBooking.totalAmount}/=</p>
                   </div>
                   {selectedBooking.notes && (
                     <div className="space-y-1 col-span-2">

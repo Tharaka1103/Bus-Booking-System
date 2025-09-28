@@ -292,10 +292,10 @@ export default function RoutesPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                ${routes.length > 0 
+                                LKR: {routes.length > 0 
                                     ? (totalRevenue / routes.length).toFixed(2)
                                     : '0.00'
-                                }
+                                }/=
                             </div>
                         </CardContent>
                     </Card>
@@ -543,7 +543,7 @@ export default function RoutesPage() {
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="price">Price ($)</Label>
+                                        <Label htmlFor="price">Price (LKR)</Label>
                                         <Input
                                             id="price"
                                             type="number"

@@ -184,7 +184,7 @@ export interface PermissionMap {
 }
 
 export const PERMISSIONS: PermissionMap = {
-  super_admin: ['users:read', 'users:write', 'users:delete', 'routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
+  super_admin: ['users:read', 'users:write', 'users:delete', 'routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete', 'analytics:read'],
   admin: ['routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
   manager: ['bookings:read', 'bookings:write', 'bookings:delete']
 };

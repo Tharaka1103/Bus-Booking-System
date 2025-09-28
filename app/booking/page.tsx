@@ -199,6 +199,65 @@ export default function BookTicketPage() {
     return 0;
   };
 
+  // Function to handle step navigation
+  const handleStepClick = (step: number) => {
+    // Validation for step navigation
+    if (step === 1) {
+      setCurrentStep(1);
+      return;
+    }
+    
+    if (step === 2) {
+      if (!formData.routeId) {
+        toast.error('Please select a route first');
+        return;
+      }
+      setCurrentStep(2);
+      return;
+    }
+    
+    if (step === 3) {
+      if (!formData.routeId) {
+        toast.error('Please select a route first');
+        return;
+      }
+      if (!formData.busId || !formData.travelDate || !formData.pickupLocation) {
+        toast.error('Please complete bus and travel details first');
+        return;
+      }
+      const bus = buses.find(b => b._id === formData.busId);
+      setSelectedBus(bus || null);
+      setCurrentStep(3);
+      return;
+    }
+    
+    if (step === 4) {
+      if (!formData.routeId) {
+        toast.error('Please select a route first');
+        return;
+      }
+      if (!formData.busId || !formData.travelDate || !formData.pickupLocation) {
+        toast.error('Please complete bus and travel details first');
+        return;
+      }
+      if (formData.seatNumbers.length !== formData.passengers) {
+        toast.error('Please select your seats first');
+        return;
+      }
+      setCurrentStep(4);
+      return;
+    }
+  };
+
+  // Function to check if step is accessible
+  const isStepAccessible = (step: number) => {
+    if (step === 1) return true;
+    if (step === 2) return formData.routeId !== '';
+    if (step === 3) return formData.routeId !== '' && formData.busId !== '' && formData.travelDate !== '' && formData.pickupLocation !== '';
+    if (step === 4) return formData.routeId !== '' && formData.busId !== '' && formData.travelDate !== '' && formData.pickupLocation !== '' && formData.seatNumbers.length === formData.passengers;
+    return false;
+  };
+
   const renderSeatLayout = () => {
     if (!selectedBus) return null;
 
@@ -382,9 +441,9 @@ export default function BookTicketPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white mt-20">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
+      <header className="bg-white shadow-sm sticky top-0">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -403,13 +462,21 @@ export default function BookTicketPage() {
             <div className="hidden md:flex items-center gap-2">
               {[1, 2, 3, 4].map((step) => (
                 <div key={step} className="flex items-center">
-                  <div className={`
-                                        w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                                        ${currentStep >= step
-                      ? 'bg-sky-500 text-white'
-                      : 'bg-gray-200 text-gray-500'
-                    }
-                                    `}>
+                  <div 
+                    onClick={() => handleStepClick(step)}
+                    className={`
+                      w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all
+                      ${currentStep >= step
+                        ? 'bg-sky-500 text-white'
+                        : 'bg-gray-200 text-gray-500'
+                      }
+                      ${isStepAccessible(step) 
+                        ? 'cursor-pointer hover:scale-110 hover:shadow-md' 
+                        : 'cursor-not-allowed opacity-60'
+                      }
+                    `}
+                    title={isStepAccessible(step) ? `Go to step ${step}` : 'Complete previous steps first'}
+                  >
                     {step}
                   </div>
                   {step < 4 && (
@@ -467,7 +534,7 @@ export default function BookTicketPage() {
                         <div className="flex items-center gap-2 text-sm">
                           <DollarSign className="w-4 h-4 text-sky-500" />
                           <span className="font-bold text-lg text-sky-600">
-                            ${route.price}
+                            LKR: {route.price}/=
                           </span>
                         </div>
                         {route.pickupLocations.length > 0 && (
@@ -764,13 +831,13 @@ export default function BookTicketPage() {
 
                       <div>
                         <p className="text-sm text-gray-600">Price per seat</p>
-                        <p className="font-bold">${selectedRoute?.price}</p>
+                        <p className="font-bold">LKR: {selectedRoute?.price}/=</p>
                       </div>
 
                       <div className="pt-4 border-t">
                         <p className="text-sm text-gray-600">Total Amount</p>
                         <p className="text-2xl font-bold text-sky-600">
-                          ${getTotalAmount()}
+                          LKR: {getTotalAmount()}/=
                         </p>
                       </div>
 
@@ -902,7 +969,7 @@ export default function BookTicketPage() {
                       </div>
                       <div className="pt-3 border-t">
                         <p className="text-gray-600">Total Amount</p>
-                        <p className="text-xl font-bold text-sky-600">${getTotalAmount()}</p>
+                        <p className="text-xl font-bold text-sky-600">LKR: {getTotalAmount()}/=</p>
                       </div>
                     </CardContent>
                   </Card>

@@ -38,6 +38,7 @@ export function hasPermission(userRole: string, permission: string): boolean {
       'bookings:read',
       'bookings:write',
       'bookings:delete',
+      'analytics:read'
     ],
     admin: [
       'routes:read',

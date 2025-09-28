@@ -3,7 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import Bus from '@/models/Bus';
 import Route from '@/models/Route';
-import Booking from '../../../../models/booking';
+import Booking from '@/models/booking';
 import { verifyToken, hasPermission } from '@/lib/auth';
 import { ApiResponse } from '@/types';
 

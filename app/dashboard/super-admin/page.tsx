@@ -35,7 +35,7 @@ export default function SuperAdminDashboard() {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await fetch('/api/dashboard/stats', {
+      const response = await fetch('/api/dashboard/analysis', {
         credentials: 'include'
       });
       

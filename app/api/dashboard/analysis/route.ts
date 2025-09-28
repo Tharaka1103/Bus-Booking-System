@@ -3,7 +3,6 @@ import { connectToDatabase } from '@/lib/mongodb';
 import User from '@/models/User';
 import Bus from '@/models/Bus';
 import Route from '@/models/Route';
-import Booking from '@/models/booking';
 import { verifyToken, hasPermission } from '@/lib/auth';
 import { ApiResponse } from '@/types';
 
@@ -34,8 +33,6 @@ export async function GET(request: NextRequest) {
     const totalUsers = await User.countDocuments();
     const totalBuses = await Bus.countDocuments();
     const totalRoutes = await Route.countDocuments();
-    const totalBookings = await Booking.countDocuments();
-    const activeBookings = await Booking.countDocuments({ status: 'confirmed' });
     
     // Calculate revenue (mock data for now)
     const revenue = 150000; // This would come from actual booking amounts
@@ -47,8 +44,6 @@ export async function GET(request: NextRequest) {
         totalUsers,
         totalBuses,
         totalRoutes,
-        totalBookings,
-        activeBookings,
         revenue
       }
     });

@@ -10,8 +10,6 @@ interface DashboardStats {
   totalUsers: number;
   totalBuses: number;
   totalRoutes: number;
-  totalBookings: number;
-  activeBookings: number;
   revenue: number;
 }
 
@@ -21,8 +19,6 @@ export default function SuperAdminDashboard() {
     totalUsers: 0,
     totalBuses: 0,
     totalRoutes: 0,
-    totalBookings: 0,
-    activeBookings: 0,
     revenue: 0
   });
 
@@ -69,20 +65,6 @@ export default function SuperAdminDashboard() {
       icon: Route,
       color: 'bg-purple-500',
       change: '+8%'
-    },
-    {
-      title: 'Total Bookings',
-      value: stats.totalBookings,
-      icon: Calendar,
-      color: 'bg-orange-500',
-      change: '+15%'
-    },
-    {
-      title: 'Active Bookings',
-      value: stats.activeBookings,
-      icon: TrendingUp,
-      color: 'bg-red-500',
-      change: '+3%'
     },
     {
       title: 'Monthly Revenue',

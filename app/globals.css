@@ -92,7 +92,7 @@ h1{
   /* Brand Colors */
   --light-blue: #91C8E4;
   --medium-blue: #749BC2;
-  --deep-blue: #4682A9;
+  --deep-blue: hsl(204, 65%, 46%);
 
   /* Primary / Secondary */
   --primary: var(--deep-blue);

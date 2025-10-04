@@ -68,6 +68,43 @@ export default function BookTicketPage() {
   const [selectedRoute, setSelectedRoute] = useState<IRoute | null>(null);
   const [selectedBus, setSelectedBus] = useState<IBus | null>(null);
 
+  // Get background image for route card
+  const getRouteCardBackground = (route: IRoute) => {
+    const fromLocation = route.fromLocation.toLowerCase();
+    const toLocation = route.toLocation.toLowerCase();
+    
+    if (fromLocation.includes('kaduruwela') || toLocation.includes('kaduruwela')) {
+      return '/kaduruwela.webp';
+    }
+    
+    if (fromLocation.includes('trincomalee') || toLocation.includes('trincomalee')) {
+      return '/trincomalee.webp';
+    }
+    
+    return null;
+  };
+
+  // Determine which video to show based on selected route
+  const getBackgroundVideo = () => {
+    // Don't show video in step 1 (route selection)
+    if (currentStep === 1 || !selectedRoute) return null;
+    
+    const fromLocation = selectedRoute.fromLocation.toLowerCase();
+    const toLocation = selectedRoute.toLocation.toLowerCase();
+    
+    if (fromLocation.includes('kaduruwela') || toLocation.includes('kaduruwela')) {
+      return '/kaduruwela.webm';
+    }
+    
+    if (fromLocation.includes('trincomalee') || toLocation.includes('trincomalee')) {
+      return '/trincomalee.webm';
+    }
+    
+    return null;
+  };
+
+  const backgroundVideo = getBackgroundVideo();
+
   useEffect(() => {
     fetchRoutes();
   }, []);
@@ -199,11 +236,52 @@ export default function BookTicketPage() {
     return 0;
   };
 
+  // Handle back button click
+  const handleBackClick = () => {
+    if (currentStep > 1) {
+      const newStep = currentStep - 1;
+      setCurrentStep(newStep);
+      
+      // Clear selected route when going back to step 1
+      if (newStep === 1) {
+        setSelectedRoute(null);
+        setSelectedBus(null);
+        setFormData({
+          routeId: '',
+          busId: '',
+          passengerName: '',
+          passengerPhone: '',
+          passengerEmail: '',
+          seatNumbers: [],
+          travelDate: '',
+          passengers: 1,
+          pickupLocation: ''
+        });
+      }
+    } else {
+      router.push('/');
+    }
+  };
+
   // Function to handle step navigation
   const handleStepClick = (step: number) => {
     // Validation for step navigation
     if (step === 1) {
       setCurrentStep(1);
+      // Clear selected route when going back to step 1
+      setSelectedRoute(null);
+      setSelectedBus(null);
+      setFormData({
+        routeId: '',
+        busId: '',
+        passengerName: '',
+        passengerPhone: '',
+        passengerEmail: '',
+        seatNumbers: [],
+        travelDate: '',
+        passengers: 1,
+        pickupLocation: ''
+      });
       return;
     }
     
@@ -270,14 +348,14 @@ export default function BookTicketPage() {
       <div className="space-y-4">
         {/* Bus Front */}
         <div className="text-center mb-4">
-          <div className="inline-flex items-center gap-4 bg-gray-100 px-6 py-2 rounded-t-lg">
-            <span className="text-sm font-medium text-gray-600">Driver</span>
+          <div className={`inline-flex items-center gap-4 px-6 py-2 rounded-t-lg ${backgroundVideo ? 'bg-white/20 backdrop-blur-sm' : 'bg-gray-100'}`}>
+            <span className={`text-sm font-medium ${backgroundVideo ? 'text-white' : 'text-gray-600'}`}>Driver</span>
             <div className="w-8 h-8 bg-gray-700 rounded"></div>
           </div>
         </div>
 
         {/* Seat Rows */}
-        <div className="bg-gray-50 p-6 rounded-lg">
+        <div className={`p-6 rounded-lg ${backgroundVideo ? 'bg-white/10 backdrop-blur-sm' : 'bg-gray-50'}`}>
           {/* Full rows */}
           {Array.from({ length: fullRows }, (_, rowIndex) => {
             const startSeat = rowIndex * seatsPerRow + 1;
@@ -299,14 +377,16 @@ export default function BookTicketPage() {
                         disabled={!isAvailable || isBooked}
                         onClick={() => toggleSeatSelection(seatNumber)}
                         className={`
-                                                    w-12 h-12 rounded-lg border-2 text-sm font-medium transition-all
-                                                    ${isSelected
+                          w-12 h-12 rounded-lg border-2 text-sm font-medium transition-all
+                          ${isSelected
                             ? 'bg-sky-500 text-white border-sky-500 scale-105 shadow-lg'
                             : isBooked
                               ? 'bg-red-100 border-red-300 cursor-not-allowed text-red-400'
-                              : 'bg-white border-green-400 hover:border-sky-400 hover:bg-sky-50 text-gray-700'
+                              : backgroundVideo 
+                                ? 'bg-white/80 backdrop-blur-sm border-white/50 hover:border-sky-400 hover:bg-white text-gray-700'
+                                : 'bg-white border-green-400 hover:border-sky-400 hover:bg-sky-50 text-gray-700'
                           }
-                                                `}
+                        `}
                       >
                         {seatNumber}
                       </button>
@@ -316,7 +396,7 @@ export default function BookTicketPage() {
 
                 {/* Aisle */}
                 <div className="w-16 flex justify-center">
-                  <div className="w-0.5 h-12 bg-gray-300"></div>
+                  <div className={`w-0.5 h-12 ${backgroundVideo ? 'bg-white/30' : 'bg-gray-300'}`}></div>
                 </div>
 
                 {/* Right seats */}
@@ -334,14 +414,16 @@ export default function BookTicketPage() {
                         disabled={!isAvailable || isBooked}
                         onClick={() => toggleSeatSelection(seatNumber)}
                         className={`
-                                                    w-12 h-12 rounded-lg border-2 text-sm font-medium transition-all
-                                                    ${isSelected
+                          w-12 h-12 rounded-lg border-2 text-sm font-medium transition-all
+                          ${isSelected
                             ? 'bg-sky-500 text-white border-sky-500 scale-105 shadow-lg'
                             : isBooked
                               ? 'bg-red-100 border-red-300 cursor-not-allowed text-red-400'
-                              : 'bg-white border-green-400 hover:border-sky-400 hover:bg-sky-50 text-gray-700'
+                              : backgroundVideo 
+                                ? 'bg-white/80 backdrop-blur-sm border-white/50 hover:border-sky-400 hover:bg-white text-gray-700'
+                                : 'bg-white border-green-400 hover:border-sky-400 hover:bg-sky-50 text-gray-700'
                           }
-                                                `}
+                        `}
                       >
                         {seatNumber}
                       </button>
@@ -354,7 +436,7 @@ export default function BookTicketPage() {
 
           {/* Last row with remaining seats */}
           {remainingSeats > 0 && (
-            <div className="flex justify-center mt-4 pt-4 border-t-2 border-gray-300">
+            <div className={`flex justify-center mt-4 pt-4 ${backgroundVideo ? 'border-t-2 border-white/30' : 'border-t-2 border-gray-300'}`}>
               <div className="flex gap-2">
                 {Array.from({ length: remainingSeats }, (_, i) => {
                   const seatNumber = fullRows * seatsPerRow + i + 1;
@@ -369,14 +451,16 @@ export default function BookTicketPage() {
                       disabled={!isAvailable || isBooked}
                       onClick={() => toggleSeatSelection(seatNumber)}
                       className={`
-                                                w-12 h-12 rounded-lg border-2 text-sm font-medium transition-all
-                                                ${isSelected
+                        w-12 h-12 rounded-lg border-2 text-sm font-medium transition-all
+                        ${isSelected
                           ? 'bg-sky-500 text-white border-sky-500 scale-105 shadow-lg'
                           : isBooked
                             ? 'bg-red-100 border-red-300 cursor-not-allowed text-red-400'
-                            : 'bg-white border-green-400 hover:border-sky-400 hover:bg-sky-50 text-gray-700'
+                            : backgroundVideo 
+                              ? 'bg-white/80 backdrop-blur-sm border-white/50 hover:border-sky-400 hover:bg-white text-gray-700'
+                              : 'bg-white border-green-400 hover:border-sky-400 hover:bg-sky-50 text-gray-700'
                         }
-                                            `}
+                      `}
                     >
                       {seatNumber}
                     </button>
@@ -390,8 +474,8 @@ export default function BookTicketPage() {
         {/* Legend */}
         <div className="flex justify-center gap-6 pt-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white border-2 border-green-400 rounded"></div>
-            <span className="text-sm">Available</span>
+            <div className={`w-8 h-8 rounded ${backgroundVideo ? 'bg-white/80 border-2 border-white/50' : 'bg-white border-2 border-green-400'}`}></div>
+            <span className={`text-sm ${backgroundVideo ? 'text-white' : 'text-gray-700'}`}>Available</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-sky-500 border-2 border-sky-500 rounded"></div>
@@ -399,7 +483,7 @@ export default function BookTicketPage() {
           </div>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-red-100 border-2 border-red-300 rounded"></div>
-            <span className="text-sm">Booked</span>
+            <span className={`text-sm ${backgroundVideo ? 'text-white' : 'text-gray-700'}`}>Booked</span>
           </div>
         </div>
       </div>
@@ -441,21 +525,47 @@ export default function BookTicketPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-white mt-20">
+    <div className="min-h-screen relative">
+      {/* Background Video */}
+      {backgroundVideo && (
+        <>
+          <div className="fixed inset-0 z-0">
+            <video
+              key={backgroundVideo}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+            >
+              <source src={backgroundVideo} type="video/webm" />
+            </video>
+            {/* Overlay for better text readability */}
+            <div className="absolute inset-0 bg-black/40"></div>
+          </div>
+        </>
+      )}
+
+      {/* Default background for routes without video */}
+      {!backgroundVideo && (
+        <div className="fixed inset-0 z-0 bg-gradient-to-br from-sky-50 to-white"></div>
+      )}
+
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0">
+      <header className={`${backgroundVideo ? 'bg-white/10 backdrop-blur-md border-b border-white/20' : 'bg-white'} shadow-sm sticky top-0 z-50`}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => currentStep > 1 ? setCurrentStep(currentStep - 1) : router.push('/')}
+                className={`${backgroundVideo ? 'text-white hover:bg-white/20' : 'text-primary hover:text-primary/80'}`}
+                onClick={handleBackClick}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              <h1 className="text-xl font-bold text-gray-800">Book Your Ticket</h1>
+              <h1 className={`text-xl font-bold ${backgroundVideo ? 'text-white' : 'text-primary'}`}>Book Your Ticket</h1>
             </div>
 
             {/* Progress Steps */}
@@ -468,7 +578,9 @@ export default function BookTicketPage() {
                       w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all
                       ${currentStep >= step
                         ? 'bg-sky-500 text-white'
-                        : 'bg-gray-200 text-gray-500'
+                        : backgroundVideo
+                          ? 'bg-white/20 text-white backdrop-blur-sm'
+                          : 'bg-gray-200 text-gray-500'
                       }
                       ${isStepAccessible(step) 
                         ? 'cursor-pointer hover:scale-110 hover:shadow-md' 
@@ -480,8 +592,13 @@ export default function BookTicketPage() {
                     {step}
                   </div>
                   {step < 4 && (
-                    <ChevronRight className={`w-4 h-4 mx-2 ${currentStep > step ? 'text-sky-500' : 'text-gray-300'
-                      }`} />
+                    <ChevronRight className={`w-4 h-4 mx-2 ${
+                      currentStep > step 
+                        ? 'text-sky-500' 
+                        : backgroundVideo 
+                          ? 'text-white/50' 
+                          : 'text-gray-300'
+                    }`} />
                   )}
                 </div>
               ))}
@@ -490,7 +607,7 @@ export default function BookTicketPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl relative z-10">
         <AnimatePresence mode="wait">
           {/* Step 1: Select Route */}
           {currentStep === 1 && (
@@ -503,61 +620,93 @@ export default function BookTicketPage() {
               transition={{ duration: 0.3 }}
             >
               <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Select Your Route</h2>
-                <p className="text-gray-600">Choose your journey from available routes</p>
+                <h2 className="text-2xl font-bold mb-2 text-gray-800">
+                  Select Your Route
+                </h2>
+                <p className="text-gray-600">
+                  Choose your journey from available routes
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {routes.map((route) => (
-                  <Card
-                    key={route._id}
-                    className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-                    onClick={() => handleRouteSelect(route)}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-lg">{route.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="w-4 h-4 text-sky-500" />
-                          <span className="text-gray-600">
-                            {route.fromLocation} → {route.toLocation}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="w-4 h-4 text-sky-500" />
-                          <span className="text-gray-600">
-                            {route.duration} minutes
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <DollarSign className="w-4 h-4 text-sky-500" />
-                          <span className="font-bold text-lg text-sky-600">
-                            LKR: {route.price}/=
-                          </span>
-                        </div>
-                        {route.pickupLocations.length > 0 && (
-                          <div className="pt-2 border-t">
-                            <p className="text-xs text-gray-500 mb-1">Pickup Points:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {route.pickupLocations.slice(0, 3).map((location, idx) => (
-                                <Badge key={idx} variant="secondary" className="text-xs">
-                                  {location}
-                                </Badge>
-                              ))}
-                              {route.pickupLocations.length > 3 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{route.pickupLocations.length - 3} more
-                                </Badge>
-                              )}
+                {routes.map((route) => {
+                  const routeBackground = getRouteCardBackground(route);
+                  const hasBackground = !!routeBackground;
+
+                  return (
+                    <div
+                      key={route._id}
+                      className="cursor-pointer transition-all hover:scale-105 rounded-lg overflow-hidden relative group"
+                      onClick={() => handleRouteSelect(route)}
+                      style={{
+                        backgroundImage: hasBackground ? `url(${routeBackground})` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}
+                    >
+                      {/* Dark overlay for better readability when there's a background image */}
+                      {hasBackground && (
+                        <div className="absolute inset-0 bg-black/60 group-hover:bg-black/30 transition-all"></div>
+                      )}
+                      
+                      <Card className={`${hasBackground ? 'bg-transparent border-white/20' : 'bg-white'} relative`}>
+                        <CardHeader>
+                          <CardTitle className={`text-lg ${hasBackground ? 'text-white drop-shadow-lg' : 'text-gray-800'}`}>
+                            {route.name}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 text-sm">
+                              <MapPin className={`w-4 h-4 ${hasBackground ? 'text-white drop-shadow' : 'text-sky-500'}`} />
+                              <span className={hasBackground ? 'text-white drop-shadow-lg font-medium' : 'text-gray-600'}>
+                                {route.fromLocation} → {route.toLocation}
+                              </span>
                             </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Clock className={`w-4 h-4 ${hasBackground ? 'text-white drop-shadow' : 'text-sky-500'}`} />
+                              <span className={hasBackground ? 'text-white drop-shadow-lg font-medium' : 'text-gray-600'}>
+                                {route.duration} minutes
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <DollarSign className={`w-4 h-4 ${hasBackground ? 'text-white drop-shadow' : 'text-sky-500'}`} />
+                              <span className={`font-bold text-lg ${hasBackground ? 'text-white drop-shadow-lg' : 'text-sky-600'}`}>
+                                LKR: {route.price}/=
+                              </span>
+                            </div>
+                            {route.pickupLocations.length > 0 && (
+                              <div className={`pt-2 ${hasBackground ? 'border-t border-white/30' : 'border-t'}`}>
+                                <p className={`text-xs mb-1 ${hasBackground ? 'text-white/90 drop-shadow' : 'text-gray-500'}`}>
+                                  Pickup Points:
+                                </p>
+                                <div className="flex flex-wrap gap-1">
+                                  {route.pickupLocations.slice(0, 3).map((location, idx) => (
+                                    <Badge 
+                                      key={idx} 
+                                      variant="secondary" 
+                                      className={`text-xs ${hasBackground ? 'bg-white/20 text-white border-white/30 backdrop-blur-sm' : ''}`}
+                                    >
+                                      {location}
+                                    </Badge>
+                                  ))}
+                                  {route.pickupLocations.length > 3 && (
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`text-xs ${hasBackground ? 'border-white/50 text-white backdrop-blur-sm' : ''}`}
+                                    >
+                                      +{route.pickupLocations.length - 3} more
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -573,8 +722,10 @@ export default function BookTicketPage() {
               transition={{ duration: 0.3 }}
             >
               <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Select Bus, Date & Details</h2>
-                <p className="text-gray-600">
+                <h2 className={`text-2xl font-bold mb-2 ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
+                  Select Bus, Date & Details
+                </h2>
+                <p className={backgroundVideo ? 'text-white/80' : 'text-gray-600'}>
                   Route: {selectedRoute?.fromLocation} → {selectedRoute?.toLocation}
                 </p>
               </div>
@@ -582,23 +733,24 @@ export default function BookTicketPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
                   {/* Travel Details */}
-                  <Card>
+                  <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                     <CardHeader>
-                      <CardTitle>Travel Details</CardTitle>
+                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>Travel Details</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label>Travel Date *</Label>
+                          <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Travel Date *</Label>
                           <Input
                             type="date"
                             value={formData.travelDate}
                             onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })}
                             min={new Date().toISOString().split('T')[0]}
+                            className={backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}
                           />
                         </div>
                         <div>
-                          <Label>Number of Passengers *</Label>
+                          <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Number of Passengers *</Label>
                           <select
                             value={formData.passengers}
                             onChange={(e) => setFormData({
@@ -606,10 +758,14 @@ export default function BookTicketPage() {
                               passengers: parseInt(e.target.value),
                               seatNumbers: []
                             })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                            className={`w-full px-3 py-2 border rounded-lg ${
+                              backgroundVideo 
+                                ? 'bg-white/20 border-white/30 text-white' 
+                                : 'border-gray-300'
+                            }`}
                           >
                             {[1, 2, 3, 4, 5, 6].map(num => (
-                              <option key={num} value={num}>
+                              <option key={num} value={num} className="text-gray-900">
                                 {num} {num === 1 ? 'Passenger' : 'Passengers'}
                               </option>
                             ))}
@@ -619,25 +775,29 @@ export default function BookTicketPage() {
 
                       {/* Pickup Location Selection */}
                       <div className="mt-4">
-                        <Label>Pickup Location *</Label>
+                        <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Pickup Location *</Label>
                         <select
                           value={formData.pickupLocation}
                           onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-1"
+                          className={`w-full px-3 py-2 border rounded-lg mt-1 ${
+                            backgroundVideo 
+                              ? 'bg-white/20 border-white/30 text-white' 
+                              : 'border-gray-300'
+                          }`}
                           required
                         >
-                          <option value="">Select pickup location</option>
-                          <option value={selectedRoute?.fromLocation || ''}>
+                          <option value="" className="text-gray-900">Select pickup location</option>
+                          <option value={selectedRoute?.fromLocation || ''} className="text-gray-900">
                             {selectedRoute?.fromLocation} (Starting Point)
                           </option>
                           {selectedRoute?.pickupLocations.map((location, idx) => (
-                            <option key={idx} value={location}>
+                            <option key={idx} value={location} className="text-gray-900">
                               {location}
                             </option>
                           ))}
                         </select>
                         {formData.pickupLocation && (
-                          <div className="mt-2 flex items-center gap-2 text-sm text-sky-600">
+                          <div className={`mt-2 flex items-center gap-2 text-sm ${backgroundVideo ? 'text-white' : 'text-sky-600'}`}>
                             <MapPin className="w-4 h-4" />
                             <span>Selected: {formData.pickupLocation}</span>
                           </div>
@@ -648,11 +808,13 @@ export default function BookTicketPage() {
 
                   {/* Available Buses */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">Available Buses</h3>
+                    <h3 className={`text-lg font-semibold mb-4 ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
+                      Available Buses
+                    </h3>
                     {buses.length === 0 ? (
-                      <Card>
+                      <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                         <CardContent className="text-center py-8">
-                          <p className="text-gray-500">No buses available on this route</p>
+                          <p className={backgroundVideo ? 'text-white/70' : 'text-gray-500'}>No buses available on this route</p>
                         </CardContent>
                       </Card>
                     ) : (
@@ -660,29 +822,36 @@ export default function BookTicketPage() {
                         {buses.map((bus) => (
                           <Card
                             key={bus._id}
-                            className={`cursor-pointer transition-all ${formData.busId === bus._id
-                                ? 'ring-2 ring-sky-500 shadow-lg'
-                                : 'hover:shadow-md'
-                              }`}
+                            className={`cursor-pointer transition-all ${
+                              backgroundVideo 
+                                ? 'bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/20' 
+                                : 'bg-white hover:shadow-md'
+                            } ${formData.busId === bus._id ? 'ring-2 ring-sky-500 shadow-lg' : ''}`}
                             onClick={() => setFormData({ ...formData, busId: bus._id })}
                           >
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 bg-sky-100 rounded-lg flex items-center justify-center">
-                                    <Bus className="w-6 h-6 text-sky-600" />
+                                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                                    backgroundVideo ? 'bg-white/20' : 'bg-sky-100'
+                                  }`}>
+                                    <Bus className={`w-6 h-6 ${backgroundVideo ? 'text-white' : 'text-sky-600'}`} />
                                   </div>
                                   <div>
-                                    <h4 className="font-semibold text-lg">{bus.busNumber}</h4>
-                                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                                      <span className="flex items-center gap-1">
+                                    <h4 className={`font-semibold text-lg ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
+                                      {bus.busNumber}
+                                    </h4>
+                                    <div className="flex items-center gap-4 text-sm">
+                                      <span className={`flex items-center gap-1 ${backgroundVideo ? 'text-white/80' : 'text-gray-600'}`}>
                                         <Users className="w-4 h-4" />
                                         {bus.capacity} seats
                                       </span>
                                       <Badge variant={
                                         bus.type === 'luxury' ? 'default' :
                                           bus.type === 'semi_luxury' ? 'secondary' : 'outline'
-                                      }>
+                                      }
+                                      className={backgroundVideo ? 'bg-white/20 text-white border-white/30' : ''}
+                                      >
                                         {bus.type.replace('_', ' ')}
                                       </Badge>
                                     </div>
@@ -697,7 +866,11 @@ export default function BookTicketPage() {
                               {bus.amenities.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-3">
                                   {bus.amenities.map((amenity, idx) => (
-                                    <Badge key={idx} variant="outline" className="text-xs">
+                                    <Badge 
+                                      key={idx} 
+                                      variant="outline" 
+                                      className={`text-xs ${backgroundVideo ? 'border-white/30 text-white' : ''}`}
+                                    >
                                       {amenity}
                                     </Badge>
                                   ))}
@@ -712,40 +885,40 @@ export default function BookTicketPage() {
                 </div>
 
                 <div>
-                  <Card className="sticky top-24">
+                  <Card className={`sticky top-24 ${backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}`}>
                     <CardHeader>
-                      <CardTitle>Selection Summary</CardTitle>
+                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>Selection Summary</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div>
-                        <p className="text-sm text-gray-600">Route</p>
-                        <p className="font-medium">
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Route</p>
+                        <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
                           {selectedRoute?.fromLocation} → {selectedRoute?.toLocation}
                         </p>
                       </div>
                       {formData.busId && (
                         <div>
-                          <p className="text-sm text-gray-600">Selected Bus</p>
-                          <p className="font-medium">
+                          <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Selected Bus</p>
+                          <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
                             {buses.find(b => b._id === formData.busId)?.busNumber}
                           </p>
                         </div>
                       )}
                       {formData.travelDate && (
                         <div>
-                          <p className="text-sm text-gray-600">Travel Date</p>
-                          <p className="font-medium">{formData.travelDate}</p>
+                          <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Travel Date</p>
+                          <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.travelDate}</p>
                         </div>
                       )}
                       {formData.pickupLocation && (
                         <div>
-                          <p className="text-sm text-gray-600">Pickup Location</p>
-                          <p className="font-medium">{formData.pickupLocation}</p>
+                          <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Pickup Location</p>
+                          <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.pickupLocation}</p>
                         </div>
                       )}
                       <div>
-                        <p className="text-sm text-gray-600">Passengers</p>
-                        <p className="font-medium">{formData.passengers}</p>
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Passengers</p>
+                        <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.passengers}</p>
                       </div>
                       <div className="pt-4">
                         <Button
@@ -774,17 +947,21 @@ export default function BookTicketPage() {
               transition={{ duration: 0.3 }}
             >
               <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Select Your Seats</h2>
-                <p className="text-gray-600">
+                <h2 className={`text-2xl font-bold mb-2 ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
+                  Select Your Seats
+                </h2>
+                <p className={backgroundVideo ? 'text-white/80' : 'text-gray-600'}>
                   Bus: {selectedBus?.busNumber} | Date: {formData.travelDate} | Passengers: {formData.passengers}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
-                  <Card>
+                  <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                     <CardHeader>
-                      <CardTitle>Seat Layout - {selectedBus?.busNumber}</CardTitle>
+                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>
+                        Seat Layout - {selectedBus?.busNumber}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       {seatLoading ? (
@@ -799,22 +976,26 @@ export default function BookTicketPage() {
                 </div>
 
                 <div>
-                  <Card>
+                  <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                     <CardHeader>
-                      <CardTitle>Booking Summary</CardTitle>
+                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>Booking Summary</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <p className="text-sm text-gray-600">Selected Seats</p>
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Selected Seats</p>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {formData.seatNumbers.length > 0 ? (
                             formData.seatNumbers.map(seat => (
-                              <Badge key={seat} variant="secondary">
+                              <Badge 
+                                key={seat} 
+                                variant="secondary"
+                                className={backgroundVideo ? 'bg-white/20 text-white border-white/30' : ''}
+                              >
                                 Seat {seat}
                               </Badge>
                             ))
                           ) : (
-                            <p className="text-sm text-gray-500">
+                            <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-500'}`}>
                               Select {formData.passengers} seat{formData.passengers > 1 ? 's' : ''}
                             </p>
                           )}
@@ -822,21 +1003,23 @@ export default function BookTicketPage() {
                       </div>
 
                       <div>
-                        <p className="text-sm text-gray-600">Pickup Location</p>
-                        <p className="font-medium flex items-center gap-1">
-                          <MapPin className="w-4 h-4 text-sky-500" />
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Pickup Location</p>
+                        <p className={`font-medium flex items-center gap-1 ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
+                          <MapPin className={`w-4 h-4 ${backgroundVideo ? 'text-white' : 'text-sky-500'}`} />
                           {formData.pickupLocation}
                         </p>
                       </div>
 
                       <div>
-                        <p className="text-sm text-gray-600">Price per seat</p>
-                        <p className="font-bold">LKR: {selectedRoute?.price}/=</p>
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Price per seat</p>
+                        <p className={`font-bold ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
+                          LKR: {selectedRoute?.price}/=
+                        </p>
                       </div>
 
-                      <div className="pt-4 border-t">
-                        <p className="text-sm text-gray-600">Total Amount</p>
-                        <p className="text-2xl font-bold text-sky-600">
+                      <div className={`pt-4 ${backgroundVideo ? 'border-t border-white/20' : 'border-t'}`}>
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Total Amount</p>
+                        <p className={`text-2xl font-bold ${backgroundVideo ? 'text-white' : 'text-sky-600'}`}>
                           LKR: {getTotalAmount()}/=
                         </p>
                       </div>
@@ -869,53 +1052,57 @@ export default function BookTicketPage() {
               transition={{ duration: 0.3 }}
             >
               <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Passenger Details</h2>
-                <p className="text-gray-600">Please provide your contact information</p>
+                <h2 className={`text-2xl font-bold mb-2 ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
+                  Passenger Details
+                </h2>
+                <p className={backgroundVideo ? 'text-white/80' : 'text-gray-600'}>
+                  Please provide your contact information
+                </p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
-                  <Card>
+                  <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                     <CardContent className="pt-6">
                       <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                          <Label>Full Name *</Label>
+                          <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Full Name *</Label>
                           <div className="relative">
-                            <User className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                            <User className={`absolute left-3 top-3 w-4 h-4 ${backgroundVideo ? 'text-white/50' : 'text-gray-400'}`} />
                             <Input
                               required
                               value={formData.passengerName}
                               onChange={(e) => setFormData({ ...formData, passengerName: e.target.value })}
                               placeholder="Enter your full name"
-                              className="pl-10"
+                              className={`pl-10 ${backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}`}
                             />
                           </div>
                         </div>
 
                         <div>
-                          <Label>Phone Number *</Label>
+                          <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Phone Number *</Label>
                           <div className="relative">
-                            <Phone className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                            <Phone className={`absolute left-3 top-3 w-4 h-4 ${backgroundVideo ? 'text-white/50' : 'text-gray-400'}`} />
                             <Input
                               required
                               value={formData.passengerPhone}
                               onChange={(e) => setFormData({ ...formData, passengerPhone: e.target.value })}
                               placeholder="+94 71 234 5678"
-                              className="pl-10"
+                              className={`pl-10 ${backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}`}
                             />
                           </div>
                         </div>
 
                         <div>
-                          <Label>Email (Optional)</Label>
+                          <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Email (Optional)</Label>
                           <div className="relative">
-                            <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                            <Mail className={`absolute left-3 top-3 w-4 h-4 ${backgroundVideo ? 'text-white/50' : 'text-gray-400'}`} />
                             <Input
                               type="email"
                               value={formData.passengerEmail}
                               onChange={(e) => setFormData({ ...formData, passengerEmail: e.target.value })}
                               placeholder="your@email.com"
-                              className="pl-10"
+                              className={`pl-10 ${backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}`}
                             />
                           </div>
                         </div>
@@ -940,44 +1127,46 @@ export default function BookTicketPage() {
                 </div>
 
                 <div>
-                  <Card>
+                  <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                     <CardHeader>
-                      <CardTitle>Booking Details</CardTitle>
+                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>Booking Details</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">
                       <div>
-                        <p className="text-gray-600">Route</p>
-                        <p className="font-medium">
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Route</p>
+                        <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
                           {selectedRoute?.fromLocation} → {selectedRoute?.toLocation}
                         </p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Bus</p>
-                        <p className="font-medium">{selectedBus?.busNumber}</p>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Bus</p>
+                        <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{selectedBus?.busNumber}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Travel Date</p>
-                        <p className="font-medium">{formData.travelDate}</p>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Travel Date</p>
+                        <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.travelDate}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Pickup Location</p>
-                        <p className="font-medium">{formData.pickupLocation}</p>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Pickup Location</p>
+                        <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.pickupLocation}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Seats</p>
-                        <p className="font-medium">{formData.seatNumbers.join(', ')}</p>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Seats</p>
+                        <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.seatNumbers.join(', ')}</p>
                       </div>
-                      <div className="pt-3 border-t">
-                        <p className="text-gray-600">Total Amount</p>
-                        <p className="text-xl font-bold text-sky-600">LKR: {getTotalAmount()}/=</p>
+                      <div className={`pt-3 ${backgroundVideo ? 'border-t border-white/20' : 'border-t'}`}>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Total Amount</p>
+                        <p className={`text-xl font-bold ${backgroundVideo ? 'text-white' : 'text-sky-600'}`}>
+                          LKR: {getTotalAmount()}/=
+                        </p>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <div className="mt-4 p-4 bg-amber-50 rounded-lg">
+                  <div className={`mt-4 p-4 rounded-lg ${backgroundVideo ? 'bg-white/10 backdrop-blur-md border border-white/20' : 'bg-amber-50'}`}>
                     <div className="flex gap-2">
-                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                      <div className="text-sm text-amber-800">
+                      <AlertCircle className={`w-5 h-5 flex-shrink-0 ${backgroundVideo ? 'text-white' : 'text-amber-600'}`} />
+                      <div className={`text-sm ${backgroundVideo ? 'text-white' : 'text-amber-800'}`}>
                         <p className="font-medium mb-1">Important</p>
                         <ul className="space-y-1">
                           <li>• Please arrive 15 minutes before departure</li>

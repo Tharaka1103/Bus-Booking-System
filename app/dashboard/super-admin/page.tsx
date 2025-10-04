@@ -91,30 +91,30 @@ export default function SuperAdminDashboard() {
     };
 
     // In your dashboard component, make sure you're passing the date correctly
-const fetchBusDetails = async (busId: string) => {
-  try {
-    // Make sure we're using the correct date format
-    const today = new Date();
-    const todayStr = today.getFullYear() + '-' + 
-                    String(today.getMonth() + 1).padStart(2, '0') + '-' + 
-                    String(today.getDate()).padStart(2, '0');
+    const fetchBusDetails = async (busId: string) => {
+        try {
+            // Make sure we're using the correct date format
+            const today = new Date();
+            const todayStr = today.getFullYear() + '-' +
+                String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                String(today.getDate()).padStart(2, '0');
 
-    console.log('Fetching bus details for date:', todayStr); // Debug log
+            console.log('Fetching bus details for date:', todayStr); // Debug log
 
-    const response = await fetch(`/api/dashboard/bus-seats/${busId}?date=${todayStr}`, {
-      credentials: 'include'
-    });
+            const response = await fetch(`/api/dashboard/bus-seats/${busId}?date=${todayStr}`, {
+                credentials: 'include'
+            });
 
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Bus details response:', data); // Debug log
-      setBusDetails(data.data);
-      setShowBusModal(true);
-    }
-  } catch (error) {
-    console.error('Error fetching bus details:', error);
-  }
-};
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Bus details response:', data); // Debug log
+                setBusDetails(data.data);
+                setShowBusModal(true);
+            }
+        } catch (error) {
+            console.error('Error fetching bus details:', error);
+        }
+    };
 
     const toggleRoute = (routeId: string) => {
         const newExpanded = new Set(expandedRoutes);
@@ -322,7 +322,7 @@ const fetchBusDetails = async (busId: string) => {
                                             {route.buses.map((bus) => (
                                                 <div
                                                     key={bus._id}
-                                                    className="bg-gray-50 p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                                                    className="bg-card p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                                                     onClick={() => fetchBusDetails(bus._id)}
                                                 >
                                                     <div className="flex justify-between items-start mb-2">
@@ -331,10 +331,10 @@ const fetchBusDetails = async (busId: string) => {
                                                             <p className="text-xs text-gray-500 capitalize">{bus.type}</p>
                                                         </div>
                                                         <span className={`text-xs px-2 py-1 rounded-full ${parseFloat(bus.occupancyRate) > 80
-                                                                ? 'bg-red-100 text-red-700'
-                                                                : parseFloat(bus.occupancyRate) > 50
-                                                                    ? 'bg-yellow-100 text-yellow-700'
-                                                                    : 'bg-green-100 text-green-700'
+                                                            ? 'bg-red-100 text-red-700'
+                                                            : parseFloat(bus.occupancyRate) > 50
+                                                                ? 'bg-yellow-100 text-yellow-700'
+                                                                : 'bg-green-100 text-green-700'
                                                             }`}>
                                                             {bus.occupancyRate}%
                                                         </span>
@@ -364,93 +364,93 @@ const fetchBusDetails = async (busId: string) => {
                 </Card>
 
                 {/* Bus Details Modal */}
-<Dialog open={showBusModal} onOpenChange={setShowBusModal}>
-    <DialogContent className="max-w-4xl">
-        <DialogHeader>
-            <DialogTitle>
-                {busDetails?.bus.busNumber} - Seat Occupancy Details
-            </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6">
-            {busDetails && (
-                <>
-                    <div className="grid grid-cols-2 gap-6">
-                        {/* Seat Occupancy Pie Chart */}
-                        <div>
-                            <h3 className="text-sm font-medium mb-3">Current Occupancy</h3>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie
-                                        data={[
-                                            { name: 'Booked', value: busDetails.bookedSeats },
-                                            { name: 'Available', value: busDetails.availableSeats }
-                                        ]}
-                                        cx="50%"
-                                        cy="50%"
-                                        labelLine={false}
-                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                        outerRadius={80}
-                                        fill="#8884d8"
-                                        dataKey="value"
-                                    >
-                                        <Cell fill="#EF4444" />
-                                        <Cell fill="#10B981" />
-                                    </Pie>
-                                    <Tooltip 
-                                        formatter={(value) => [value, 'Seats']}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            {/* Debug info - remove in production */}
-                            <div className="text-xs text-gray-500 mt-2">
-                                Debug: Booked: {busDetails.bookedSeats}, Available: {busDetails.availableSeats}
-                            </div>
-                        </div>
+                <Dialog open={showBusModal} onOpenChange={setShowBusModal}>
+                    <DialogContent className="max-w-4xl">
+                        <DialogHeader>
+                            <DialogTitle>
+                                {busDetails?.bus.busNumber} - Seat Occupancy Details
+                            </DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-6">
+                            {busDetails && (
+                                <>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        {/* Seat Occupancy Pie Chart */}
+                                        <div>
+                                            <h3 className="text-sm font-medium mb-3">Current Occupancy</h3>
+                                            <ResponsiveContainer width="100%" height={250}>
+                                                <PieChart>
+                                                    <Pie
+                                                        data={[
+                                                            { name: 'Booked', value: busDetails.bookedSeats },
+                                                            { name: 'Available', value: busDetails.availableSeats }
+                                                        ]}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        labelLine={false}
+                                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                                        outerRadius={80}
+                                                        fill="#8884d8"
+                                                        dataKey="value"
+                                                    >
+                                                        <Cell fill="#EF4444" />
+                                                        <Cell fill="#10B981" />
+                                                    </Pie>
+                                                    <Tooltip
+                                                        formatter={(value) => [value, 'Seats']}
+                                                    />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                            {/* Debug info - remove in production */}
+                                            <div className="text-xs text-gray-500 mt-2">
+                                                Debug: Booked: {busDetails.bookedSeats}, Available: {busDetails.availableSeats}
+                                            </div>
+                                        </div>
 
-                        {/* Weekly Trend */}
-                        <div>
-                            <h3 className="text-sm font-medium mb-3">7-Day Booking Trend</h3>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <LineChart data={busDetails.weeklyTrend}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis 
-                                        dataKey="_id" 
-                                        tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                    />
-                                    <YAxis />
-                                    <Tooltip 
-                                        labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                                    />
-                                    <Line type="monotone" dataKey="bookings" stroke="#3B82F6" />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
+                                        {/* Weekly Trend */}
+                                        <div>
+                                            <h3 className="text-sm font-medium mb-3">7-Day Booking Trend</h3>
+                                            <ResponsiveContainer width="100%" height={250}>
+                                                <LineChart data={busDetails.weeklyTrend}>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis
+                                                        dataKey="_id"
+                                                        tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                    />
+                                                    <YAxis />
+                                                    <Tooltip
+                                                        labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                                                    />
+                                                    <Line type="monotone" dataKey="bookings" stroke="#3B82F6" />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
 
-                    {/* Bus Details */}
-                    <div className="grid grid-cols-4 gap-4">
-                        <div className="bg-gray-50 p-3 rounded">
-                            <p className="text-xs text-gray-600">Total Seats</p>
-                            <p className="text-xl font-bold">{busDetails.totalSeats}</p>
+                                    {/* Bus Details */}
+                                    <div className="grid grid-cols-4 gap-4">
+                                        <div className="bg-gray-50 p-3 rounded">
+                                            <p className="text-xs text-gray-600">Total Seats</p>
+                                            <p className="text-xl font-bold">{busDetails.totalSeats}</p>
+                                        </div>
+                                        <div className="bg-red-50 p-3 rounded">
+                                            <p className="text-xs text-gray-600">Booked Seats</p>
+                                            <p className="text-xl font-bold text-red-600">{busDetails.bookedSeats}</p>
+                                        </div>
+                                        <div className="bg-green-50 p-3 rounded">
+                                            <p className="text-xs text-gray-600">Available Seats</p>
+                                            <p className="text-xl font-bold text-green-600">{busDetails.availableSeats}</p>
+                                        </div>
+                                        <div className="bg-blue-50 p-3 rounded">
+                                            <p className="text-xs text-gray-600">Occupancy Rate</p>
+                                            <p className="text-xl font-bold text-blue-600">{busDetails.occupancyRate}%</p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
-                        <div className="bg-red-50 p-3 rounded">
-                            <p className="text-xs text-gray-600">Booked Seats</p>
-                            <p className="text-xl font-bold text-red-600">{busDetails.bookedSeats}</p>
-                        </div>
-                        <div className="bg-green-50 p-3 rounded">
-                            <p className="text-xs text-gray-600">Available Seats</p>
-                            <p className="text-xl font-bold text-green-600">{busDetails.availableSeats}</p>
-                        </div>
-                        <div className="bg-blue-50 p-3 rounded">
-                            <p className="text-xs text-gray-600">Occupancy Rate</p>
-                            <p className="text-xl font-bold text-blue-600">{busDetails.occupancyRate}%</p>
-                        </div>
-                    </div>
-                </>
-            )}
-        </div>
-    </DialogContent>
-</Dialog>
+                    </DialogContent>
+                </Dialog>
             </div>
         </DashboardLayout>
     );

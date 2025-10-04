@@ -165,7 +165,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
             <div className="flex items-center space-x-3">
               <div>
-                <h1 className="text-lg font-bold text-gray-800">Vijitha Travels</h1>
+                <h1 className="text-lg font-bold text-gray-800">Wijitha Travels</h1>
                 <p className="text-sm text-gray-500 capitalize">{user?.role?.replace('_', ' ')} Portal</p>
               </div>
             </div>

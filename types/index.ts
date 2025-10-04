@@ -15,8 +15,6 @@ export interface IUser {
   updatedAt: Date;
 }
 
-// types/index.ts (update the existing file)
-
 export interface IRoute {
   _id: string;
   name: string;
@@ -25,7 +23,7 @@ export interface IRoute {
   pickupLocations: string[];
   distance: number;
   duration: number;
-  price: number; // Add this if not already present
+  price: number;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -93,13 +91,13 @@ export interface IBus {
   type: 'luxury' | 'semi_luxury' | 'normal';
   capacity: number;
   amenities: string[];
+  departureTime: string;
   isActive: boolean;
-  routeId?: string | IRoute; // Can be populated with route data
+  routeId?: string | IRoute;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// Add these new request types
 export interface CreateRouteRequest {
   name: string;
   fromLocation: string;
@@ -126,7 +124,8 @@ export interface CreateBusRequest {
   type: 'luxury' | 'semi_luxury' | 'normal';
   capacity: number;
   amenities: string[];
-  routeId?: string;
+  departureTime: string;
+  routeId: string;
 }
 
 export interface UpdateBusRequest {
@@ -134,10 +133,10 @@ export interface UpdateBusRequest {
   type?: 'luxury' | 'semi_luxury' | 'normal';
   capacity?: number;
   amenities?: string[];
+  departureTime?: string;
   routeId?: string;
   isActive?: boolean;
 }
-
 
 export interface ApiResponse<T = any> {
   success: boolean;

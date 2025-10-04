@@ -268,7 +268,7 @@ const AboutSection = () => {
               
               <div className="space-y-4 text-gray-600 leading-relaxed">
                 <p className="text-lg">
-                  Founded in 1995, Vijitha Travels began as a small family business with a simple vision: 
+                  Founded in 1995, Wijitha Travels began as a small family business with a simple vision: 
                   to provide safe, comfortable, and reliable transportation that brings people closer to 
                   their destinations and dreams.
                 </p>

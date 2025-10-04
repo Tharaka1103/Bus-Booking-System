@@ -8,7 +8,7 @@ const FAQSection = () => {
 
   const faqs = [
     {
-      question: "How can I book a bus ticket with Vijitha Travels?",
+      question: "How can I book a bus ticket with Wijitha Travels?",
       answer: "You can book tickets online through our website, mobile app, or visit any of our booking counters. Online booking is available 24/7 and offers instant confirmation."
     },
     {

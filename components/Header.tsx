@@ -67,7 +67,7 @@ const Header = () => {
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="transition-all duration-300 ease-in-out">
               <h1 className={`font-bold text-primary transition-all duration-500 ease-in-out group-hover:text-blue-700 `}>
-                Vijitha Travels
+                Wijitha Travels
               </h1>
               <p className={`text-gray-600 transition-all duration-500 ease-in-out group-hover:text-gray-800`}>
                 Your Journey, Our Priority

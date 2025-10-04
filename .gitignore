@@ -36,3 +36,4 @@ yarn-error.log*
 next-env.d.ts
 scripts/createDefaultAdmin.ts
 scripts/seedPermissions.ts
+scripts/migrate-departure-times.ts

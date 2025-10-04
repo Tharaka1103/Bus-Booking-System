@@ -10,10 +10,8 @@ import {
     Search,
     Bus as BusIcon,
     Users,
-    Wifi,
-    X,
+    Clock,
     MoreHorizontal,
-    MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,7 +58,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { IBus, IRoute, CreateBusRequest, UpdateBusRequest } from '@/types';
+import { IBus, IRoute, CreateBusRequest } from '@/types';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -88,6 +86,7 @@ export default function BusesPage() {
         type: 'normal',
         capacity: 40,
         amenities: [],
+        departureTime: '08:00',
         routeId: ''
     });
     const [formLoading, setFormLoading] = useState(false);
@@ -132,41 +131,82 @@ export default function BusesPage() {
         }
     };
 
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+        
+        if (!formData.busNumber || !formData.busNumber.trim()) {
+            newErrors.busNumber = 'Bus number is required';
+        }
+        
+        if (!formData.capacity || formData.capacity <= 0) {
+            newErrors.capacity = 'Capacity must be greater than 0';
+        }
+        
+        if (!formData.departureTime) {
+            newErrors.departureTime = 'Departure time is required';
+        } else {
+            // Validate time format
+            const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+            if (!timeRegex.test(formData.departureTime)) {
+                newErrors.departureTime = 'Invalid time format';
+            }
+        }
+        
+        if (!formData.routeId) {
+            newErrors.routeId = 'Route is required';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setFormLoading(true);
-        setErrors({});
 
-        // Client-side validation
-        const newErrors: Record<string, string> = {};
-        if (!formData.busNumber.trim()) newErrors.busNumber = 'Bus number is required';
-        if (formData.capacity <= 0) newErrors.capacity = 'Capacity must be greater than 0';
-
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            setFormLoading(false);
+        if (!validateForm()) {
+            toast.error('Please fill all required fields correctly');
             return;
         }
+
+        console.log('📝 Form data to submit:', JSON.stringify(formData, null, 2));
+
+        setFormLoading(true);
 
         try {
             const url = editingBus ? `/api/buses/${editingBus._id}` : '/api/buses';
             const method = editingBus ? 'PUT' : 'POST';
 
+            const payload: CreateBusRequest = {
+                busNumber: formData.busNumber.trim(),
+                type: formData.type,
+                capacity: Number(formData.capacity),
+                amenities: formData.amenities || [],
+                departureTime: formData.departureTime || '08:00',
+                routeId: formData.routeId
+            };
+
+            console.log('📤 Sending payload:', JSON.stringify(payload, null, 2));
+
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
+            
+            console.log('📨 Response from server:', JSON.stringify(data, null, 2));
+
             if (data.success) {
                 toast.success(editingBus ? 'Bus updated successfully' : 'Bus created successfully');
-                fetchBuses();
+                await fetchBuses();
                 resetForm();
             } else {
-                toast.error(data.message);
+                toast.error(data.message || 'Operation failed');
+                console.error('❌ Server error:', data);
             }
         } catch (error) {
+            console.error('❌ Request error:', error);
             toast.error('Operation failed');
         } finally {
             setFormLoading(false);
@@ -201,12 +241,15 @@ export default function BusesPage() {
     };
 
     const handleEdit = (bus: IBus) => {
+        console.log('✏️ Editing bus:', bus);
+        
         setEditingBus(bus);
         setFormData({
             busNumber: bus.busNumber,
             type: bus.type,
             capacity: bus.capacity,
-            amenities: bus.amenities,
+            amenities: bus.amenities || [],
+            departureTime: bus.departureTime || '08:00',
             routeId: typeof bus.routeId === 'object' ? bus.routeId._id : bus.routeId || ''
         });
         setIsModalOpen(true);
@@ -223,6 +266,7 @@ export default function BusesPage() {
             type: 'normal',
             capacity: 40,
             amenities: [],
+            departureTime: '08:00',
             routeId: ''
         });
         setEditingBus(null);
@@ -249,6 +293,26 @@ export default function BusesPage() {
             case 'luxury': return 'default';
             case 'semi_luxury': return 'secondary';
             default: return 'outline';
+        }
+    };
+
+    const formatTime = (time?: string) => {
+        if (!time) return 'Not set';
+        
+        try {
+            const [hours, minutes] = time.split(':');
+            const hour = parseInt(hours);
+            
+            if (isNaN(hour)) {
+                return 'Not set';
+            }
+            
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour % 12 || 12;
+            return `${displayHour}:${minutes} ${ampm}`;
+        } catch (error) {
+            console.error('Error formatting time:', error);
+            return 'Not set';
         }
     };
 
@@ -354,6 +418,7 @@ export default function BusesPage() {
                                         <TableHead>Type</TableHead>
                                         <TableHead>Capacity</TableHead>
                                         <TableHead>Route</TableHead>
+                                        <TableHead>Departure</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead>Actions</TableHead>
                                     </TableRow>
@@ -379,13 +444,20 @@ export default function BusesPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                {typeof bus.routeId === 'object' ? (
-                                                    <span className="font-medium">{bus.routeId?.name}</span>
+                                                {typeof bus.routeId === 'object' && bus.routeId ? (
+                                                    <span className="font-medium">{bus.routeId.name}</span>
                                                 ) : (
                                                     <span className="text-gray-400">No route assigned</span>
                                                 )}
                                             </TableCell>
-                                            
+                                            <TableCell>
+                                                <div className="flex items-center">
+                                                    <Clock className="w-4 h-4 mr-1 text-gray-400" />
+                                                    {bus.departureTime ? formatTime(bus.departureTime) : (
+                                                        <Badge variant="outline" className="text-xs">Not set</Badge>
+                                                    )}
+                                                </div>
+                                            </TableCell>
                                             <TableCell>
                                                 <Badge variant={bus.isActive ? 'default' : 'secondary'}>
                                                     {bus.isActive ? 'Active' : 'Inactive'}
@@ -427,7 +499,7 @@ export default function BusesPage() {
 
                 {/* Modal */}
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="sm:max-w-[525px] bg-sky-100">
+                    <DialogContent className="sm:max-w-[600px] bg-sky-100">
                         <DialogHeader>
                             <DialogTitle>{editingBus ? 'Edit Bus' : 'Add New Bus'}</DialogTitle>
                             <DialogDescription>
@@ -435,24 +507,24 @@ export default function BusesPage() {
                             </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleSubmit}>
-                            <div className="grid gap-4 py-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="busNumber">Bus Number</Label>
-                                    <Input
-                                        id="busNumber"
-                                        value={formData.busNumber}
-                                        onChange={(e) => setFormData({ ...formData, busNumber: e.target.value })}
-                                        placeholder="e.g., VT-001"
-                                        className={errors.busNumber ? 'border-red-500' : ''}
-                                    />
-                                    {errors.busNumber && (
-                                        <p className="text-sm text-red-600">{errors.busNumber}</p>
-                                    )}
-                                </div>
-
+                            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="type">Bus Type</Label>
+                                        <Label htmlFor="busNumber">Bus Number *</Label>
+                                        <Input
+                                            id="busNumber"
+                                            value={formData.busNumber}
+                                            onChange={(e) => setFormData({ ...formData, busNumber: e.target.value })}
+                                            placeholder="e.g., VT-001"
+                                            className={errors.busNumber ? 'border-red-500' : ''}
+                                        />
+                                        {errors.busNumber && (
+                                            <p className="text-sm text-red-600">{errors.busNumber}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="type">Bus Type *</Label>
                                         <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value as any })}>
                                             <SelectTrigger>
                                                 <SelectValue />
@@ -466,8 +538,11 @@ export default function BusesPage() {
                                             </SelectContent>
                                         </Select>
                                     </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="capacity">Capacity (seats)</Label>
+                                        <Label htmlFor="capacity">Capacity (seats) *</Label>
                                         <Input
                                             id="capacity"
                                             type="number"
@@ -481,16 +556,32 @@ export default function BusesPage() {
                                             <p className="text-sm text-red-600">{errors.capacity}</p>
                                         )}
                                     </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="departureTime">Departure Time *</Label>
+                                        <Input
+                                            id="departureTime"
+                                            type="time"
+                                            value={formData.departureTime}
+                                            onChange={(e) => {
+                                                console.log('⏰ Time input changed:', e.target.value);
+                                                setFormData({ ...formData, departureTime: e.target.value });
+                                            }}
+                                            className={errors.departureTime ? 'border-red-500' : ''}
+                                        />
+                                        {errors.departureTime && (
+                                            <p className="text-sm text-red-600">{errors.departureTime}</p>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="routeId">Route</Label>
+                                    <Label htmlFor="routeId">Route *</Label>
                                     <Select value={formData.routeId} onValueChange={(value) => setFormData({ ...formData, routeId: value })}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a route (optional)" />
+                                        <SelectTrigger className={errors.routeId ? 'border-red-500' : ''}>
+                                            <SelectValue placeholder="Select a route" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="empty">No route assigned</SelectItem>
                                             {routes.map(route => (
                                                 <SelectItem key={route._id} value={route._id}>
                                                     {route.name} ({route.fromLocation} → {route.toLocation})
@@ -498,6 +589,9 @@ export default function BusesPage() {
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    {errors.routeId && (
+                                        <p className="text-sm text-red-600">{errors.routeId}</p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
@@ -519,7 +613,7 @@ export default function BusesPage() {
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button type="button" onClick={resetForm} className="bg-gray-500 hover:bg-gray-600">
+                                <Button type="button" onClick={resetForm} variant="outline" disabled={formLoading}>
                                     Cancel
                                 </Button>
                                 <Button type="submit" disabled={formLoading} className="bg-primary">

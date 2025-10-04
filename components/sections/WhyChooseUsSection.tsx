@@ -39,7 +39,7 @@ const WhyChooseUsSection = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h1 className="text-3xl md:text-5xl font-bold text-accent mb-4">
-            Why Choose Vijitha Travels?
+            Why Choose Wijitha Travels?
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             We're not just a bus service - we're your travel partner committed to 
@@ -75,7 +75,7 @@ const WhyChooseUsSection = () => {
               Ready to Experience the Difference?
             </h3>
             <p className="text-lg mb-6 opacity-90">
-              Join thousands of satisfied customers who trust Vijitha Travels for their journey
+              Join thousands of satisfied customers who trust Wijitha Travels for their journey
             </p>
             <div className="flex flex-col  sm:flex-row gap-4 justify-center">
               <button className="bg-primary hover:scale-105 text-white rounded-full px-8 py-3 font-semibold transition-colors cursor-pointer">

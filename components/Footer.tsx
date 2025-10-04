@@ -12,7 +12,7 @@ const Footer = () => {
           {/* Logo and Company Name */}
           <div className="mb-8">
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
-              Vijitha Travels
+              Wijitha Travels
             </h1>
             <p className="text-xl text-gray-900 max-w-2xl mx-auto leading-relaxed">
               Sri Lanka's most trusted bus service provider, connecting cities with comfort, safety, and reliability since 1995
@@ -41,7 +41,7 @@ const Footer = () => {
                   <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center group-hover:bg-primary/30 transition-colors">
                     <Mail className="w-5 h-5 text-primary" />
                   </div>
-                  <span className="text-gray-900">info@vijithatravels.lk</span>
+                  <span className="text-gray-900">info@Wijithatravels.lk</span>
                 </div>
                 <div className="flex items-start justify-center lg:justify-start space-x-3 group">
                   <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center group-hover:bg-primary/30 transition-colors mt-1">
@@ -83,7 +83,7 @@ const Footer = () => {
           {/* Copyright and Links */}
           <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-8">
             <p className="text-gray-900">
-              © 2025 Vijitha Travels. All rights reserved.
+              © 2025 Wijitha Travels. All rights reserved.
             </p>
             <div className="flex flex-wrap justify-center space-x-6">
               <Link href="/privacy" className="text-gray-900 hover:text-primary transition-colors">

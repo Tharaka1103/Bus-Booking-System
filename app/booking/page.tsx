@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Bus,
-  Calendar,
   MapPin,
   Clock,
   DollarSign,
@@ -25,9 +24,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from 'sonner';
 import { IRoute, IBus } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface BookingFormData {
   routeId: string;
@@ -43,6 +50,7 @@ interface BookingFormData {
 
 export default function BookTicketPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [routes, setRoutes] = useState<IRoute[]>([]);
   const [buses, setBuses] = useState<IBus[]>([]);
@@ -68,7 +76,6 @@ export default function BookTicketPage() {
   const [selectedRoute, setSelectedRoute] = useState<IRoute | null>(null);
   const [selectedBus, setSelectedBus] = useState<IBus | null>(null);
 
-  // Get background image for route card
   const getRouteCardBackground = (route: IRoute) => {
     const fromLocation = route.fromLocation.toLowerCase();
     const toLocation = route.toLocation.toLowerCase();
@@ -84,9 +91,7 @@ export default function BookTicketPage() {
     return null;
   };
 
-  // Determine which video to show based on selected route
   const getBackgroundVideo = () => {
-    // Don't show video in step 1 (route selection)
     if (currentStep === 1 || !selectedRoute) return null;
     
     const fromLocation = selectedRoute.fromLocation.toLowerCase();
@@ -129,7 +134,7 @@ export default function BookTicketPage() {
         setRoutes(data.data.filter((route: IRoute) => route.isActive));
       }
     } catch (error) {
-      toast.error('Failed to fetch routes');
+      toast.error(t('booking.failedFetchRoutes'));
     }
   };
 
@@ -145,7 +150,7 @@ export default function BookTicketPage() {
         setBuses(routeBuses);
       }
     } catch (error) {
-      toast.error('Failed to fetch buses');
+      toast.error(t('booking.failedFetchBuses'));
     }
   };
 
@@ -161,7 +166,7 @@ export default function BookTicketPage() {
         setBookedSeats(data.data.bookedSeats);
       }
     } catch (error) {
-      toast.error('Failed to fetch available seats');
+      toast.error(t('booking.failedFetchSeats'));
     } finally {
       setSeatLoading(false);
     }
@@ -179,7 +184,7 @@ export default function BookTicketPage() {
       setSelectedBus(bus || null);
       setCurrentStep(3);
     } else {
-      toast.error('Please fill all required fields');
+      toast.error(t('booking.fillAllFields'));
     }
   };
 
@@ -198,7 +203,7 @@ export default function BookTicketPage() {
           seatNumbers: [...formData.seatNumbers, seatNumber].sort((a, b) => a - b)
         });
       } else {
-        toast.error(`You can only select ${formData.passengers} seat(s)`);
+        toast.error(`${t('booking.onlySelect')} ${formData.passengers} ${t('booking.seats')}`);
       }
     }
   };
@@ -218,12 +223,12 @@ export default function BookTicketPage() {
       if (data.success) {
         setBookingId(data.data._id);
         setBookingSuccess(true);
-        toast.success('Booking created successfully!');
+        toast.success(t('booking.bookingCreated'));
       } else {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error('Failed to create booking');
+      toast.error(t('booking.failedCreateBooking'));
     } finally {
       setLoading(false);
     }
@@ -236,13 +241,11 @@ export default function BookTicketPage() {
     return 0;
   };
 
-  // Handle back button click
   const handleBackClick = () => {
     if (currentStep > 1) {
       const newStep = currentStep - 1;
       setCurrentStep(newStep);
       
-      // Clear selected route when going back to step 1
       if (newStep === 1) {
         setSelectedRoute(null);
         setSelectedBus(null);
@@ -263,12 +266,9 @@ export default function BookTicketPage() {
     }
   };
 
-  // Function to handle step navigation
   const handleStepClick = (step: number) => {
-    // Validation for step navigation
     if (step === 1) {
       setCurrentStep(1);
-      // Clear selected route when going back to step 1
       setSelectedRoute(null);
       setSelectedBus(null);
       setFormData({
@@ -287,7 +287,7 @@ export default function BookTicketPage() {
     
     if (step === 2) {
       if (!formData.routeId) {
-        toast.error('Please select a route first');
+        toast.error(t('booking.selectRouteFirst'));
         return;
       }
       setCurrentStep(2);
@@ -296,11 +296,11 @@ export default function BookTicketPage() {
     
     if (step === 3) {
       if (!formData.routeId) {
-        toast.error('Please select a route first');
+        toast.error(t('booking.selectRouteFirst'));
         return;
       }
       if (!formData.busId || !formData.travelDate || !formData.pickupLocation) {
-        toast.error('Please complete bus and travel details first');
+        toast.error(t('booking.completeBusDetails'));
         return;
       }
       const bus = buses.find(b => b._id === formData.busId);
@@ -311,15 +311,15 @@ export default function BookTicketPage() {
     
     if (step === 4) {
       if (!formData.routeId) {
-        toast.error('Please select a route first');
+        toast.error(t('booking.selectRouteFirst'));
         return;
       }
       if (!formData.busId || !formData.travelDate || !formData.pickupLocation) {
-        toast.error('Please complete bus and travel details first');
+        toast.error(t('booking.completeBusDetails'));
         return;
       }
       if (formData.seatNumbers.length !== formData.passengers) {
-        toast.error('Please select your seats first');
+        toast.error(t('booking.selectSeatsFirst'));
         return;
       }
       setCurrentStep(4);
@@ -327,7 +327,6 @@ export default function BookTicketPage() {
     }
   };
 
-  // Function to check if step is accessible
   const isStepAccessible = (step: number) => {
     if (step === 1) return true;
     if (step === 2) return formData.routeId !== '';
@@ -340,29 +339,25 @@ export default function BookTicketPage() {
     if (!selectedBus) return null;
 
     const totalSeats = selectedBus.capacity;
-    const seatsPerRow = 4; // Standard 2+2 configuration
+    const seatsPerRow = 4;
     const fullRows = Math.floor(totalSeats / seatsPerRow);
     const remainingSeats = totalSeats % seatsPerRow;
 
     return (
       <div className="space-y-4">
-        {/* Bus Front */}
         <div className="text-center mb-4">
           <div className={`inline-flex items-center gap-4 px-6 py-2 rounded-t-lg ${backgroundVideo ? 'bg-white/20 backdrop-blur-sm' : 'bg-gray-100'}`}>
-            <span className={`text-sm font-medium ${backgroundVideo ? 'text-white' : 'text-gray-600'}`}>Driver</span>
+            <span className={`text-sm font-medium ${backgroundVideo ? 'text-white' : 'text-gray-600'}`}>{t('booking.driver')}</span>
             <div className="w-8 h-8 bg-gray-700 rounded"></div>
           </div>
         </div>
 
-        {/* Seat Rows */}
         <div className={`p-6 rounded-lg ${backgroundVideo ? 'bg-white/10 backdrop-blur-sm' : 'bg-gray-50'}`}>
-          {/* Full rows */}
           {Array.from({ length: fullRows }, (_, rowIndex) => {
             const startSeat = rowIndex * seatsPerRow + 1;
 
             return (
               <div key={rowIndex} className="flex items-center justify-center mb-3">
-                {/* Left seats */}
                 <div className="flex gap-2">
                   {[0, 1].map(offset => {
                     const seatNumber = startSeat + offset;
@@ -394,12 +389,10 @@ export default function BookTicketPage() {
                   })}
                 </div>
 
-                {/* Aisle */}
                 <div className="w-16 flex justify-center">
                   <div className={`w-0.5 h-12 ${backgroundVideo ? 'bg-white/30' : 'bg-gray-300'}`}></div>
                 </div>
 
-                {/* Right seats */}
                 <div className="flex gap-2">
                   {[2, 3].map(offset => {
                     const seatNumber = startSeat + offset;
@@ -434,7 +427,6 @@ export default function BookTicketPage() {
             );
           })}
 
-          {/* Last row with remaining seats */}
           {remainingSeats > 0 && (
             <div className={`flex justify-center mt-4 pt-4 ${backgroundVideo ? 'border-t-2 border-white/30' : 'border-t-2 border-gray-300'}`}>
               <div className="flex gap-2">
@@ -471,19 +463,18 @@ export default function BookTicketPage() {
           )}
         </div>
 
-        {/* Legend */}
         <div className="flex justify-center gap-6 pt-4">
           <div className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded ${backgroundVideo ? 'bg-white/80 border-2 border-white/50' : 'bg-white border-2 border-green-400'}`}></div>
-            <span className={`text-sm ${backgroundVideo ? 'text-white' : 'text-gray-700'}`}>Available</span>
+            <span className={`text-sm ${backgroundVideo ? 'text-white' : 'text-gray-700'}`}>{t('booking.available')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-sky-500 border-2 border-sky-500 rounded"></div>
-            <span className="text-sm text-white bg-sky-500 px-2 py-1 rounded">Selected</span>
+            <span className="text-sm text-white bg-sky-500 px-2 py-1 rounded">{t('booking.selected')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-red-100 border-2 border-red-300 rounded"></div>
-            <span className={`text-sm ${backgroundVideo ? 'text-white' : 'text-gray-700'}`}>Booked</span>
+            <span className={`text-sm ${backgroundVideo ? 'text-white' : 'text-gray-700'}`}>{t('booking.booked')}</span>
           </div>
         </div>
       </div>
@@ -504,19 +495,19 @@ export default function BookTicketPage() {
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-10 h-10 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Booking Confirmed!</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('booking.bookingConfirmed')}</h2>
             <p className="text-gray-600 mb-6">
-              Your booking has been successfully created. Please save your booking ID for future reference.
+              {t('booking.bookingSuccess')}
             </p>
             <div className="bg-gray-100 rounded-lg p-4 mb-6">
-              <p className="text-sm text-gray-600">Booking ID</p>
+              <p className="text-sm text-gray-600">{t('booking.bookingId')}</p>
               <p className="text-lg font-mono font-bold">{bookingId.slice(-8).toUpperCase()}</p>
             </div>
             <div className="text-sm text-gray-600 mb-6">
-              <p><strong>Pickup Location:</strong> {formData.pickupLocation}</p>
+              <p><strong>{t('booking.pickupLocation')}:</strong> {formData.pickupLocation}</p>
             </div>
             <Button onClick={() => router.push('/')} className="w-full">
-              Back to Home
+              {t('booking.backToHome')}
             </Button>
           </CardContent>
         </Card>
@@ -526,7 +517,6 @@ export default function BookTicketPage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Background Video */}
       {backgroundVideo && (
         <>
           <div className="fixed inset-0 z-0">
@@ -540,18 +530,15 @@ export default function BookTicketPage() {
             >
               <source src={backgroundVideo} type="video/webm" />
             </video>
-            {/* Overlay for better text readability */}
             <div className="absolute inset-0 bg-black/40"></div>
           </div>
         </>
       )}
 
-      {/* Default background for routes without video */}
       {!backgroundVideo && (
         <div className="fixed inset-0 z-0 bg-gradient-to-br from-sky-50 to-white"></div>
       )}
 
-      {/* Header */}
       <header className={`${backgroundVideo ? 'bg-white/10 backdrop-blur-md border-b border-white/20' : 'bg-white'} shadow-sm sticky top-0 z-50`}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -563,12 +550,11 @@ export default function BookTicketPage() {
                 onClick={handleBackClick}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
+                {t('booking.back')}
               </Button>
-              <h1 className={`text-xl font-bold ${backgroundVideo ? 'text-white' : 'text-primary'}`}>Book Your Ticket</h1>
+              <h1 className={`text-xl font-bold ${backgroundVideo ? 'text-white' : 'text-primary'}`}>{t('booking.title')}</h1>
             </div>
 
-            {/* Progress Steps */}
             <div className="hidden md:flex items-center gap-2">
               {[1, 2, 3, 4].map((step) => (
                 <div key={step} className="flex items-center">
@@ -587,7 +573,7 @@ export default function BookTicketPage() {
                         : 'cursor-not-allowed opacity-60'
                       }
                     `}
-                    title={isStepAccessible(step) ? `Go to step ${step}` : 'Complete previous steps first'}
+                    title={isStepAccessible(step) ? `${t('booking.goToStep')} ${step}` : t('booking.completePrevious')}
                   >
                     {step}
                   </div>
@@ -609,7 +595,6 @@ export default function BookTicketPage() {
 
       <div className="container mx-auto px-4 py-8 max-w-6xl relative z-10">
         <AnimatePresence mode="wait">
-          {/* Step 1: Select Route */}
           {currentStep === 1 && (
             <motion.div
               key="step1"
@@ -621,10 +606,10 @@ export default function BookTicketPage() {
             >
               <div className="mb-8">
                 <h2 className="text-2xl font-bold mb-2 text-gray-800">
-                  Select Your Route
+                  {t('booking.selectRoute')}
                 </h2>
                 <p className="text-gray-600">
-                  Choose your journey from available routes
+                  {t('booking.chooseJourney')}
                 </p>
               </div>
 
@@ -644,7 +629,6 @@ export default function BookTicketPage() {
                         backgroundPosition: 'center',
                       }}
                     >
-                      {/* Dark overlay for better readability when there's a background image */}
                       {hasBackground && (
                         <div className="absolute inset-0 bg-black/60 group-hover:bg-black/30 transition-all"></div>
                       )}
@@ -666,7 +650,7 @@ export default function BookTicketPage() {
                             <div className="flex items-center gap-2 text-sm">
                               <Clock className={`w-4 h-4 ${hasBackground ? 'text-white drop-shadow' : 'text-sky-500'}`} />
                               <span className={hasBackground ? 'text-white drop-shadow-lg font-medium' : 'text-gray-600'}>
-                                {route.duration} minutes
+                                {route.duration} {t('booking.minutes')}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
@@ -678,7 +662,7 @@ export default function BookTicketPage() {
                             {route.pickupLocations.length > 0 && (
                               <div className={`pt-2 ${hasBackground ? 'border-t border-white/30' : 'border-t'}`}>
                                 <p className={`text-xs mb-1 ${hasBackground ? 'text-white/90 drop-shadow' : 'text-gray-500'}`}>
-                                  Pickup Points:
+                                  {t('booking.pickupPoints')}:
                                 </p>
                                 <div className="flex flex-wrap gap-1">
                                   {route.pickupLocations.slice(0, 3).map((location, idx) => (
@@ -711,7 +695,6 @@ export default function BookTicketPage() {
             </motion.div>
           )}
 
-          {/* Step 2: Select Bus, Date, Passengers, and Pickup Location */}
           {currentStep === 2 && (
             <motion.div
               key="step2"
@@ -723,98 +706,102 @@ export default function BookTicketPage() {
             >
               <div className="mb-8">
                 <h2 className={`text-2xl font-bold mb-2 ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
-                  Select Bus, Date & Details
+                  {t('booking.selectBus')}
                 </h2>
                 <p className={backgroundVideo ? 'text-white/80' : 'text-gray-600'}>
-                  Route: {selectedRoute?.fromLocation} → {selectedRoute?.toLocation}
+                  {t('booking.route')}: {selectedRoute?.fromLocation} → {selectedRoute?.toLocation}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
-                  {/* Travel Details */}
                   <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                     <CardHeader>
-                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>Travel Details</CardTitle>
+                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>
+                        {t('booking.selectBus')}
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Travel Date *</Label>
+                    <CardContent className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                          <Label className={backgroundVideo ? 'text-white/90 text-sm font-medium' : 'text-gray-700 text-sm font-medium'}>
+                            {t('booking.travelDate')} *
+                          </Label>
                           <Input
                             type="date"
                             value={formData.travelDate}
                             onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })}
                             min={new Date().toISOString().split('T')[0]}
-                            className={backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}
+                            className={backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50 h-11' : 'h-11'}
                           />
                         </div>
-                        <div>
-                          <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Number of Passengers *</Label>
-                          <select
-                            value={formData.passengers}
-                            onChange={(e) => setFormData({
+
+                        <div className="space-y-3">
+                          <Label className={backgroundVideo ? 'text-white/90 text-sm font-medium' : 'text-gray-700 text-sm font-medium'}>
+                            {t('booking.passengers')} *
+                          </Label>
+                          <Select
+                            value={formData.passengers.toString()}
+                            onValueChange={(value) => setFormData({
                               ...formData,
-                              passengers: parseInt(e.target.value),
+                              passengers: parseInt(value),
                               seatNumbers: []
                             })}
-                            className={`w-full px-3 py-2 border rounded-lg ${
-                              backgroundVideo 
-                                ? 'bg-white/20 border-white/30 text-white' 
-                                : 'border-gray-300'
-                            }`}
                           >
-                            {[1, 2, 3, 4, 5, 6].map(num => (
-                              <option key={num} value={num} className="text-gray-900">
-                                {num} {num === 1 ? 'Passenger' : 'Passengers'}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className={backgroundVideo ? 'bg-white/20 border-white/30 text-white h-11' : 'h-11'}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[1, 2, 3, 4, 5, 6].map(num => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num} {num === 1 ? t('booking.passenger') : t('booking.passengers_plural')}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
 
-                      {/* Pickup Location Selection */}
-                      <div className="mt-4">
-                        <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Pickup Location *</Label>
-                        <select
+                      <div className="space-y-3">
+                        <Label className={backgroundVideo ? 'text-white/90 text-sm font-medium' : 'text-gray-700 text-sm font-medium'}>
+                          {t('booking.pickupLocation')} *
+                        </Label>
+                        <Select
                           value={formData.pickupLocation}
-                          onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
-                          className={`w-full px-3 py-2 border rounded-lg mt-1 ${
-                            backgroundVideo 
-                              ? 'bg-white/20 border-white/30 text-white' 
-                              : 'border-gray-300'
-                          }`}
-                          required
+                          onValueChange={(value) => setFormData({ ...formData, pickupLocation: value })}
                         >
-                          <option value="" className="text-gray-900">Select pickup location</option>
-                          <option value={selectedRoute?.fromLocation || ''} className="text-gray-900">
-                            {selectedRoute?.fromLocation} (Starting Point)
-                          </option>
-                          {selectedRoute?.pickupLocations.map((location, idx) => (
-                            <option key={idx} value={location} className="text-gray-900">
-                              {location}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger className={backgroundVideo ? 'bg-white/20 border-white/30 text-white h-11' : 'h-11'}>
+                            <SelectValue placeholder={t('booking.selectPickup')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={selectedRoute?.fromLocation || ''}>
+                              {selectedRoute?.fromLocation} ({t('booking.startingPoint')})
+                            </SelectItem>
+                            {selectedRoute?.pickupLocations.map((location, idx) => (
+                              <SelectItem key={idx} value={location}>
+                                {location}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         {formData.pickupLocation && (
                           <div className={`mt-2 flex items-center gap-2 text-sm ${backgroundVideo ? 'text-white' : 'text-sky-600'}`}>
                             <MapPin className="w-4 h-4" />
-                            <span>Selected: {formData.pickupLocation}</span>
+                            <span>{t('booking.selected')}: {formData.pickupLocation}</span>
                           </div>
                         )}
                       </div>
                     </CardContent>
                   </Card>
 
-                  {/* Available Buses */}
                   <div>
                     <h3 className={`text-lg font-semibold mb-4 ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
-                      Available Buses
+                      {t('booking.availableBuses')}
                     </h3>
                     {buses.length === 0 ? (
                       <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                         <CardContent className="text-center py-8">
-                          <p className={backgroundVideo ? 'text-white/70' : 'text-gray-500'}>No buses available on this route</p>
+                          <p className={backgroundVideo ? 'text-white/70' : 'text-gray-500'}>{t('booking.noBuses')}</p>
                         </CardContent>
                       </Card>
                     ) : (
@@ -844,7 +831,7 @@ export default function BookTicketPage() {
                                     <div className="flex items-center gap-4 text-sm">
                                       <span className={`flex items-center gap-1 ${backgroundVideo ? 'text-white/80' : 'text-gray-600'}`}>
                                         <Users className="w-4 h-4" />
-                                        {bus.capacity} seats
+                                        {bus.capacity} {t('booking.seats')}
                                       </span>
                                       <Badge variant={
                                         bus.type === 'luxury' ? 'default' :
@@ -887,18 +874,18 @@ export default function BookTicketPage() {
                 <div>
                   <Card className={`sticky top-24 ${backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}`}>
                     <CardHeader>
-                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>Selection Summary</CardTitle>
+                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>{t('booking.selectionSummary')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div>
-                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Route</p>
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>{t('booking.route')}</p>
                         <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
                           {selectedRoute?.fromLocation} → {selectedRoute?.toLocation}
                         </p>
                       </div>
                       {formData.busId && (
                         <div>
-                          <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Selected Bus</p>
+                          <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>{t('booking.selectedBus')}</p>
                           <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
                             {buses.find(b => b._id === formData.busId)?.busNumber}
                           </p>
@@ -906,18 +893,18 @@ export default function BookTicketPage() {
                       )}
                       {formData.travelDate && (
                         <div>
-                          <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Travel Date</p>
+                          <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>{t('booking.travelDate')}</p>
                           <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.travelDate}</p>
                         </div>
                       )}
                       {formData.pickupLocation && (
                         <div>
-                          <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Pickup Location</p>
+                          <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>{t('booking.pickupLocation')}</p>
                           <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.pickupLocation}</p>
                         </div>
                       )}
                       <div>
-                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Passengers</p>
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>{t('booking.passengers')}</p>
                         <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.passengers}</p>
                       </div>
                       <div className="pt-4">
@@ -926,7 +913,7 @@ export default function BookTicketPage() {
                           disabled={!formData.busId || !formData.travelDate || !formData.pickupLocation}
                           className="w-full"
                         >
-                          Continue to Seat Selection
+                          {t('booking.continueToSeats')}
                         </Button>
                       </div>
                     </CardContent>
@@ -936,7 +923,6 @@ export default function BookTicketPage() {
             </motion.div>
           )}
 
-          {/* Step 3: Select Seats */}
           {currentStep === 3 && (
             <motion.div
               key="step3"
@@ -948,10 +934,10 @@ export default function BookTicketPage() {
             >
               <div className="mb-8">
                 <h2 className={`text-2xl font-bold mb-2 ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
-                  Select Your Seats
+                  {t('booking.selectSeats')}
                 </h2>
                 <p className={backgroundVideo ? 'text-white/80' : 'text-gray-600'}>
-                  Bus: {selectedBus?.busNumber} | Date: {formData.travelDate} | Passengers: {formData.passengers}
+                  {t('booking.bus')}: {selectedBus?.busNumber} | {t('booking.date')}: {formData.travelDate} | {t('booking.passengers')}: {formData.passengers}
                 </p>
               </div>
 
@@ -960,7 +946,7 @@ export default function BookTicketPage() {
                   <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                     <CardHeader>
                       <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>
-                        Seat Layout - {selectedBus?.busNumber}
+                        {t('booking.seatLayout')} - {selectedBus?.busNumber}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -978,11 +964,11 @@ export default function BookTicketPage() {
                 <div>
                   <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                     <CardHeader>
-                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>Booking Summary</CardTitle>
+                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>{t('booking.bookingSummary')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Selected Seats</p>
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>{t('booking.selectedSeats')}</p>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {formData.seatNumbers.length > 0 ? (
                             formData.seatNumbers.map(seat => (
@@ -991,19 +977,19 @@ export default function BookTicketPage() {
                                 variant="secondary"
                                 className={backgroundVideo ? 'bg-white/20 text-white border-white/30' : ''}
                               >
-                                Seat {seat}
+                                {t('booking.seat')} {seat}
                               </Badge>
                             ))
                           ) : (
                             <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-500'}`}>
-                              Select {formData.passengers} seat{formData.passengers > 1 ? 's' : ''}
+                              {t('booking.selectMoreSeats')} {formData.passengers} {t('booking.seats')}
                             </p>
                           )}
                         </div>
                       </div>
 
                       <div>
-                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Pickup Location</p>
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>{t('booking.pickupLocation')}</p>
                         <p className={`font-medium flex items-center gap-1 ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
                           <MapPin className={`w-4 h-4 ${backgroundVideo ? 'text-white' : 'text-sky-500'}`} />
                           {formData.pickupLocation}
@@ -1011,14 +997,14 @@ export default function BookTicketPage() {
                       </div>
 
                       <div>
-                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Price per seat</p>
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>{t('booking.pricePerSeat')}</p>
                         <p className={`font-bold ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
                           LKR: {selectedRoute?.price}/=
                         </p>
                       </div>
 
                       <div className={`pt-4 ${backgroundVideo ? 'border-t border-white/20' : 'border-t'}`}>
-                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>Total Amount</p>
+                        <p className={`text-sm ${backgroundVideo ? 'text-white/70' : 'text-gray-600'}`}>{t('booking.totalAmount')}</p>
                         <p className={`text-2xl font-bold ${backgroundVideo ? 'text-white' : 'text-sky-600'}`}>
                           LKR: {getTotalAmount()}/=
                         </p>
@@ -1030,8 +1016,8 @@ export default function BookTicketPage() {
                         className="w-full"
                       >
                         {formData.seatNumbers.length !== formData.passengers
-                          ? `Select ${formData.passengers - formData.seatNumbers.length} more seat(s)`
-                          : 'Continue to Details'
+                          ? `${t('booking.selectMoreSeats')} ${formData.passengers - formData.seatNumbers.length} ${t('booking.moreSeats')}`
+                          : t('booking.continueToDetails')
                         }
                       </Button>
                     </CardContent>
@@ -1041,7 +1027,6 @@ export default function BookTicketPage() {
             </motion.div>
           )}
 
-          {/* Step 4: Passenger Details */}
           {currentStep === 4 && (
             <motion.div
               key="step4"
@@ -1053,10 +1038,10 @@ export default function BookTicketPage() {
             >
               <div className="mb-8">
                 <h2 className={`text-2xl font-bold mb-2 ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
-                  Passenger Details
+                  {t('booking.passengerDetails')}
                 </h2>
                 <p className={backgroundVideo ? 'text-white/80' : 'text-gray-600'}>
-                  Please provide your contact information
+                  {t('booking.fillAllFields')}
                 </p>
               </div>
 
@@ -1064,45 +1049,51 @@ export default function BookTicketPage() {
                 <div className="lg:col-span-2">
                   <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                     <CardContent className="pt-6">
-                      <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                          <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Full Name *</Label>
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="space-y-3">
+                          <Label className={backgroundVideo ? 'text-white/90 text-sm font-medium' : 'text-gray-700 text-sm font-medium'}>
+                            {t('booking.fullName')} *
+                          </Label>
                           <div className="relative">
-                            <User className={`absolute left-3 top-3 w-4 h-4 ${backgroundVideo ? 'text-white/50' : 'text-gray-400'}`} />
+                            <User className={`absolute left-3 top-3.5 w-4 h-4 ${backgroundVideo ? 'text-white/50' : 'text-gray-400'}`} />
                             <Input
                               required
                               value={formData.passengerName}
                               onChange={(e) => setFormData({ ...formData, passengerName: e.target.value })}
-                              placeholder="Enter your full name"
-                              className={`pl-10 ${backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}`}
+                              placeholder={t('booking.enterFullName')}
+                              className={`pl-10 h-11 ${backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}`}
                             />
                           </div>
                         </div>
 
-                        <div>
-                          <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Phone Number *</Label>
+                        <div className="space-y-3">
+                          <Label className={backgroundVideo ? 'text-white/90 text-sm font-medium' : 'text-gray-700 text-sm font-medium'}>
+                            {t('booking.phoneNumber')} *
+                          </Label>
                           <div className="relative">
-                            <Phone className={`absolute left-3 top-3 w-4 h-4 ${backgroundVideo ? 'text-white/50' : 'text-gray-400'}`} />
+                            <Phone className={`absolute left-3 top-3.5 w-4 h-4 ${backgroundVideo ? 'text-white/50' : 'text-gray-400'}`} />
                             <Input
                               required
                               value={formData.passengerPhone}
                               onChange={(e) => setFormData({ ...formData, passengerPhone: e.target.value })}
-                              placeholder="+94 71 234 5678"
-                              className={`pl-10 ${backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}`}
+                              placeholder={t('booking.enterPhone')}
+                              className={`pl-10 h-11 ${backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}`}
                             />
                           </div>
                         </div>
 
-                        <div>
-                          <Label className={backgroundVideo ? 'text-white/90' : 'text-gray-700'}>Email (Optional)</Label>
+                        <div className="space-y-3">
+                          <Label className={backgroundVideo ? 'text-white/90 text-sm font-medium' : 'text-gray-700 text-sm font-medium'}>
+                            {t('booking.email')} ({t('booking.optional')})
+                          </Label>
                           <div className="relative">
-                            <Mail className={`absolute left-3 top-3 w-4 h-4 ${backgroundVideo ? 'text-white/50' : 'text-gray-400'}`} />
+                            <Mail className={`absolute left-3 top-3.5 w-4 h-4 ${backgroundVideo ? 'text-white/50' : 'text-gray-400'}`} />
                             <Input
                               type="email"
                               value={formData.passengerEmail}
                               onChange={(e) => setFormData({ ...formData, passengerEmail: e.target.value })}
-                              placeholder="your@email.com"
-                              className={`pl-10 ${backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}`}
+                              placeholder={t('booking.enterEmail')}
+                              className={`pl-10 h-11 ${backgroundVideo ? 'bg-white/20 border-white/30 text-white placeholder:text-white/50' : ''}`}
                             />
                           </div>
                         </div>
@@ -1110,15 +1101,15 @@ export default function BookTicketPage() {
                         <Button
                           type="submit"
                           disabled={loading || !formData.passengerName || !formData.passengerPhone}
-                          className="w-full"
+                          className="w-full h-11"
                         >
                           {loading ? (
                             <>
                               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Processing...
+                              {t('booking.processing')}
                             </>
                           ) : (
-                            'Confirm Booking'
+                            t('booking.confirmBooking')
                           )}
                         </Button>
                       </form>
@@ -1129,33 +1120,33 @@ export default function BookTicketPage() {
                 <div>
                   <Card className={backgroundVideo ? 'bg-white/10 backdrop-blur-md border-white/20' : 'bg-white'}>
                     <CardHeader>
-                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>Booking Details</CardTitle>
+                      <CardTitle className={backgroundVideo ? 'text-white' : 'text-gray-800'}>{t('booking.bookingDetails')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm">
                       <div>
-                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Route</p>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>{t('booking.route')}</p>
                         <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>
                           {selectedRoute?.fromLocation} → {selectedRoute?.toLocation}
                         </p>
                       </div>
                       <div>
-                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Bus</p>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>{t('booking.bus')}</p>
                         <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{selectedBus?.busNumber}</p>
                       </div>
                       <div>
-                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Travel Date</p>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>{t('booking.travelDate')}</p>
                         <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.travelDate}</p>
                       </div>
                       <div>
-                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Pickup Location</p>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>{t('booking.pickupLocation')}</p>
                         <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.pickupLocation}</p>
                       </div>
                       <div>
-                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Seats</p>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>{t('booking.seats')}</p>
                         <p className={`font-medium ${backgroundVideo ? 'text-white' : 'text-gray-800'}`}>{formData.seatNumbers.join(', ')}</p>
                       </div>
                       <div className={`pt-3 ${backgroundVideo ? 'border-t border-white/20' : 'border-t'}`}>
-                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>Total Amount</p>
+                        <p className={backgroundVideo ? 'text-white/70' : 'text-gray-600'}>{t('booking.totalAmount')}</p>
                         <p className={`text-xl font-bold ${backgroundVideo ? 'text-white' : 'text-sky-600'}`}>
                           LKR: {getTotalAmount()}/=
                         </p>
@@ -1167,11 +1158,11 @@ export default function BookTicketPage() {
                     <div className="flex gap-2">
                       <AlertCircle className={`w-5 h-5 flex-shrink-0 ${backgroundVideo ? 'text-white' : 'text-amber-600'}`} />
                       <div className={`text-sm ${backgroundVideo ? 'text-white' : 'text-amber-800'}`}>
-                        <p className="font-medium mb-1">Important</p>
+                        <p className="font-medium mb-1">{t('booking.important')}</p>
                         <ul className="space-y-1">
-                          <li>• Please arrive 15 minutes before departure</li>
-                          <li>• Carry a valid ID for verification</li>
-                          <li>• Save your booking ID for reference</li>
+                          <li>• {t('booking.arriveEarly')}</li>
+                          <li>• {t('booking.carryId')}</li>
+                          <li>• {t('booking.saveBookingId')}</li>
                         </ul>
                       </div>
                     </div>

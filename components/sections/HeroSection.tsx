@@ -8,6 +8,7 @@ import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, Variants, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Register ScrollTrigger plugin
 if (typeof window !== 'undefined') {
@@ -16,24 +17,25 @@ if (typeof window !== 'undefined') {
 
 const HeroSection = () => {
   const heroRef = useRef(null);
-
-  // Desktop image slider data
-  const desktopImages = [
-    { src: '/heroimg1.jpg', alt: 'Sri Lankan bus journey through mountains' },
-    { src: '/heroimg2.jpg', alt: 'Comfortable bus interior' },
-    { src: '/aboutimg.jpg', alt: 'Beautiful Sri Lankan landscape' },
-  ];
-
-  // Mobile image slider data (optimized for mobile viewing)
-  const mobileImages = [
-    { src: '/mobileimg1.jpg', alt: 'Sri Lankan bus journey - mobile view' },
-    { src: '/mobileimg2.jpg', alt: 'Comfortable bus interior - mobile view' },
-    { src: '/mobileimg3.jpg', alt: 'Beautiful landscape - mobile view' },
-  ];
+  const { t } = useLanguage();
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const SLIDE_INTERVAL = 4000;
+
+  // Desktop image slider data with translated alt text
+  const desktopImages = [
+    { src: '/heroimg1.jpg', alt: t('hero.imageAlt.mountains') },
+    { src: '/heroimg2.jpg', alt: t('hero.imageAlt.interior') },
+    { src: '/aboutimg.jpg', alt: t('hero.imageAlt.landscape') },
+  ];
+
+  // Mobile image slider data with translated alt text
+  const mobileImages = [
+    { src: '/mobileimg1.jpg', alt: t('hero.imageAlt.mountainsMobile') },
+    { src: '/mobileimg2.jpg', alt: t('hero.imageAlt.interiorMobile') },
+    { src: '/mobileimg3.jpg', alt: t('hero.imageAlt.landscapeMobile') },
+  ];
 
   // Check if mobile view
   useEffect(() => {
@@ -62,7 +64,7 @@ const HeroSection = () => {
     setCurrentImageIndex(0);
   }, [isMobile]);
 
-  // Navigation functions (omitted for brevity, assume they work)
+  // Navigation functions
   const goToNextSlide = () => setCurrentImageIndex((p) => (p === currentImages.length - 1 ? 0 : p + 1));
   const goToPrevSlide = () => setCurrentImageIndex((p) => (p === 0 ? currentImages.length - 1 : p - 1));
   const goToSlide = (index: number) => setCurrentImageIndex(index);
@@ -184,8 +186,53 @@ const HeroSection = () => {
         />
       </div>
 
-      {/* Navigation Arrows & Indicators (omitted for brevity, assume they are correct) */}
-      {/* ... */}
+      {/* Navigation Arrows - Desktop */}
+      <div className="hidden md:block">
+        <motion.button
+          onClick={goToPrevSlide}
+          className="absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 
+                     bg-white/10 backdrop-blur-sm hover:bg-white/20 
+                     text-white rounded-full p-3 lg:p-4 
+                     transition-all duration-300 group border border-white/20"
+          whileHover={{ scale: 1.1, x: -5 }}
+          whileTap={{ scale: 0.9 }}
+          aria-label="Previous image"
+        >
+          <ChevronLeft className="w-6 h-6 lg:w-8 lg:h-8 group-hover:scale-110 transition-transform" />
+        </motion.button>
+
+        <motion.button
+          onClick={goToNextSlide}
+          className="absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 
+                     bg-white/10 backdrop-blur-sm hover:bg-white/20 
+                     text-white rounded-full p-3 lg:p-4 
+                     transition-all duration-300 group border border-white/20"
+          whileHover={{ scale: 1.1, x: 5 }}
+          whileTap={{ scale: 0.9 }}
+          aria-label="Next image"
+        >
+          <ChevronRight className="w-6 h-6 lg:w-8 lg:h-8 group-hover:scale-110 transition-transform" />
+        </motion.button>
+      </div>
+
+      {/* Slide Indicators */}
+      <div className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 z-20 
+                      flex gap-2 md:gap-3 px-4">
+        {currentImages.map((_, index) => (
+          <motion.button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`h-1.5 md:h-2 rounded-full transition-all duration-300 
+                       ${index === currentImageIndex 
+                         ? 'bg-white w-12 md:w-16' 
+                         : 'bg-white/40 hover:bg-white/60 w-6 md:w-8'
+                       }`}
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
 
       {/* Content (GSAP ScrollTrigger Target) */}
       <div className="relative z-10 container mx-auto px-4 text-center text-white hero-content">
@@ -207,7 +254,7 @@ const HeroSection = () => {
               transition={{ delay: 0.5 }}
               className="block"
             >
-              Your Journey
+              {t('hero.title.line1')}
             </motion.span>
             <motion.span
               className="text-accent block bg-accent bg-clip-text"
@@ -216,7 +263,7 @@ const HeroSection = () => {
               animate="visible"
               transition={{ delay: 0.7 }}
             >
-              Starts Here
+              {t('hero.title.line2')}
             </motion.span>
           </motion.h1>
 
@@ -225,7 +272,7 @@ const HeroSection = () => {
                        text-gray-200 max-w-2xl mx-auto px-4 drop-shadow-lg"
             variants={itemVariants}
           >
-            Experience comfortable, safe, and reliable bus travel across beautiful Sri Lanka.
+            {t('hero.description')}
           </motion.p>
 
           <motion.div
@@ -251,7 +298,7 @@ const HeroSection = () => {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1.5 }}
                   >
-                    Book Your Journey
+                    {t('hero.bookButton')}
                   </motion.span>
                   <motion.div
                     variants={arrowVariants}

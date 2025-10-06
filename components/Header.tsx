@@ -61,8 +61,8 @@ const Header = () => {
     <header className={`sticky top-5 h-0 z-50 transition-all duration-500 ease-in-out`}>
 
       {/* Main header */}
-      <div className={`container mx-auto px-4 transition-all duration-500 ease-in-out bg-transparent`}>
-        <div className="flex justify-between items-center h-full">
+      <div className={`container mx-auto px-4 transition-all duration-500 ease-in-out bg-transparent `}>
+        <div className="flex justify-between items-center h-full ">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="transition-all duration-300 ease-in-out">
@@ -178,14 +178,14 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <button
-            className={`lg:hidden p-2 rounded-lg transition-all duration-300 ease-in-out hover:bg-gray-100 `}
+            className={`lg:hidden p-2 rounded-lg text-black bg-primary transition-all duration-300 ease-in-out hover:bg-primary `}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <div className="relative">
-              <Menu className={`transition-all text-black duration-300 ease-in-out ${
+              <Menu className={`transition-all text-white duration-300 ease-in-out ${
                 isMenuOpen ? 'opacity-0 rotate-45 scale-0' : 'opacity-100 rotate-0 scale-100'
               }`} />
-              <X className={`absolute top-0 left-0 text-black transition-all duration-300 ease-in-out ${
+              <X className={`absolute top-0 left-0 text-white transition-all duration-300 ease-in-out ${
                 isMenuOpen ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-45 scale-0'
               } `} />
             </div>
@@ -194,7 +194,7 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t border-gray-200">
+          <div className="md:hidden mt-4 p-4 border-t border-gray-200 bg-white rounded-lg">
             <div className="flex flex-col space-y-3 pt-4">
               {navItems.map((item) => (
                 <Link
@@ -250,7 +250,7 @@ const Header = () => {
                     <Button
                       onClick={handleLogout}
                       variant="outline"
-                      className="w-full justify-start bg-red-700 text-red-600 border-red-200 hover:bg-red-50"
+                      className="w-full justify-start bg-red-700 text-white border-red-200 hover:bg-red-50"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out

@@ -73,7 +73,14 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       icon: Calendar,
       permission: 'bookings:read',
       
-    }
+    },
+    {
+      name: 'Feedback Management',
+      href: '/dashboard/feedback',
+      icon: Calendar,
+      permission: 'feedbacks:read',
+      
+    },
   ];
 
   const toggleExpanded = (itemName: string) => {

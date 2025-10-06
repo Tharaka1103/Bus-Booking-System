@@ -54,7 +54,8 @@ export default function RootLayout({
     '/dashboard/buses', 
     '/dashboard/routes', 
     '/dashboard/bookings', 
-    '/dashboard/bookings/create'
+    '/dashboard/bookings/create',
+    '/dashboard/feedback'
   ];
   const shouldHideHeaderFooter = hideHeaderFooterRoutes.includes(pathname);
 

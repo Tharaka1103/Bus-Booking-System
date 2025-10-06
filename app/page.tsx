@@ -7,6 +7,7 @@ import FAQSection from '@/components/sections/FAQSection';
 import ContactSection from '@/components/sections/ContactSection';
 import BookingSection from '@/components/sections/BookingSection';
 import {Preloader} from '@/components/Preloader'
+import FeedbackSection from '@/components/FeedbackSection';
 export default function HomePage() {
   return (
     <main className="min-h-screen">
@@ -17,6 +18,7 @@ export default function HomePage() {
             <BookingSection />
       <WhyChooseUsSection />
       <FAQSection />
+      <FeedbackSection/>
       <ContactSection />
     </main>
   );

@@ -138,6 +138,36 @@ export interface UpdateBusRequest {
   isActive?: boolean;
 }
 
+
+export interface IFeedback {
+  _id: string;
+  name: string;
+  mobile: string;
+  feedback: string;
+  status: 'pending' | 'approved' | 'rejected';
+  isActive: boolean;
+  approvedBy?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  approvedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateFeedbackRequest {
+  name: string;
+  mobile: string;
+  feedback: string;
+}
+
+export interface UpdateFeedbackRequest {
+  status?: 'pending' | 'approved' | 'rejected';
+  isActive?: boolean;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
@@ -183,7 +213,7 @@ export interface PermissionMap {
 }
 
 export const PERMISSIONS: PermissionMap = {
-  super_admin: ['users:read', 'users:write', 'users:delete', 'routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete', 'analytics:read'],
+  super_admin: ['users:read', 'users:write', 'users:delete', 'routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete', 'analytics:read', 'feedbacks:read','feedbacks:write','feedbacks:delete',],
   admin: ['routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
   manager: ['bookings:read', 'bookings:write', 'bookings:delete']
 };

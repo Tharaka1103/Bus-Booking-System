@@ -37,7 +37,7 @@ interface AuthProviderProps {
 }
 
 const PERMISSIONS = {
-  super_admin: ['users:read', 'users:write', 'users:delete', 'routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
+  super_admin: ['users:read', 'users:write', 'users:delete', 'routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete', 'feedbacks:read','feedbacks:write','feedbacks:delete',],
   admin: ['routes:read', 'routes:write', 'routes:delete', 'buses:read', 'buses:write', 'buses:delete', 'bookings:read', 'bookings:write', 'bookings:delete'],
   manager: ['bookings:read', 'bookings:write', 'bookings:delete']
 };

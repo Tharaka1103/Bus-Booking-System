@@ -13,13 +13,17 @@ import {
     Route as RouteIcon,
     X,
     MoreHorizontal,
-    DollarSign
+    DollarSign,
+    Info,
+    RefreshCw,
+    Filter,
+    Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Table,
     TableBody,
@@ -37,6 +41,13 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import {
+    ContextMenu,
+    ContextMenuContent,
+    ContextMenuItem,
+    ContextMenuTrigger,
+    ContextMenuSeparator,
+} from '@/components/ui/context-menu';
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -52,9 +63,19 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { IRoute, CreateRouteRequest, UpdateRouteRequest } from '@/types';
+import { IRoute, CreateRouteRequest } from '@/types';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { cn } from '@/lib/utils';
 
 export default function RoutesPage() {
     const { hasPermission } = useAuth();
@@ -62,7 +83,9 @@ export default function RoutesPage() {
     const [routes, setRoutes] = useState<IRoute[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [editingRoute, setEditingRoute] = useState<IRoute | null>(null);
     const [selectedRoute, setSelectedRoute] = useState<IRoute | null>(null);
@@ -73,7 +96,7 @@ export default function RoutesPage() {
         pickupLocations: [],
         distance: 0,
         duration: 0,
-        price: 0
+        price: 0,
     });
     const [newPickupLocation, setNewPickupLocation] = useState('');
     const [formLoading, setFormLoading] = useState(false);
@@ -89,6 +112,7 @@ export default function RoutesPage() {
 
     const fetchRoutes = async () => {
         try {
+            setLoading(true);
             const response = await fetch('/api/routes', {
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -130,12 +154,14 @@ export default function RoutesPage() {
             const response = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
             });
 
             const data = await response.json();
             if (data.success) {
-                toast.success(editingRoute ? 'Route updated successfully' : 'Route created successfully');
+                toast.success(
+                    editingRoute ? 'Route updated successfully' : 'Route created successfully'
+                );
                 fetchRoutes();
                 resetForm();
             } else {
@@ -148,9 +174,15 @@ export default function RoutesPage() {
         }
     };
 
+    const handleViewDetails = (route: IRoute) => {
+        setSelectedRoute(route);
+        setIsDetailModalOpen(true);
+    };
+
     const handleDelete = (route: IRoute) => {
         setSelectedRoute(route);
         setIsDeleteDialogOpen(true);
+        setIsDetailModalOpen(false);
     };
 
     const confirmDeleteRoute = async () => {
@@ -166,6 +198,7 @@ export default function RoutesPage() {
             if (data.success) {
                 toast.success('Route deleted successfully');
                 setIsDeleteDialogOpen(false);
+                setSelectedRoute(null);
                 fetchRoutes();
             } else {
                 toast.error(data.message);
@@ -184,9 +217,10 @@ export default function RoutesPage() {
             pickupLocations: route.pickupLocations,
             distance: route.distance,
             duration: route.duration,
-            price: route.price || 0
+            price: route.price || 0,
         });
         setIsModalOpen(true);
+        setIsDetailModalOpen(false);
     };
 
     const handleCreateRoute = () => {
@@ -202,7 +236,7 @@ export default function RoutesPage() {
             pickupLocations: [],
             distance: 0,
             duration: 0,
-            price: 0
+            price: 0,
         });
         setEditingRoute(null);
         setIsModalOpen(false);
@@ -214,7 +248,7 @@ export default function RoutesPage() {
         if (newPickupLocation.trim()) {
             setFormData({
                 ...formData,
-                pickupLocations: [...formData.pickupLocations, newPickupLocation.trim()]
+                pickupLocations: [...formData.pickupLocations, newPickupLocation.trim()],
             });
             setNewPickupLocation('');
         }
@@ -223,25 +257,43 @@ export default function RoutesPage() {
     const removePickupLocation = (index: number) => {
         setFormData({
             ...formData,
-            pickupLocations: formData.pickupLocations.filter((_, i) => i !== index)
+            pickupLocations: formData.pickupLocations.filter((_, i) => i !== index),
         });
     };
 
-    const filteredRoutes = routes.filter(route =>
-        route.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        route.fromLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        route.toLocation.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredRoutes = routes.filter((route) => {
+        const matchesSearch =
+            route.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            route.fromLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            route.toLocation.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Calculate total revenue from all routes
+        const matchesStatus =
+            statusFilter === 'all' ||
+            (statusFilter === 'active' && route.isActive) ||
+            (statusFilter === 'inactive' && !route.isActive);
+
+        return matchesSearch && matchesStatus;
+    });
+
+    // Calculate stats
     const totalRevenue = routes.reduce((sum, route) => sum + (route.price || 0), 0);
+    const activeRoutes = routes.filter((route) => route.isActive).length;
+    const avgDuration =
+        routes.length > 0
+            ? Math.round(routes.reduce((sum, route) => sum + route.duration, 0) / routes.length)
+            : 0;
 
     if (!hasPermission('routes:read')) {
         return (
             <DashboardLayout>
-                <div className="flex items-center justify-center h-64">
-                    <p className="text-gray-500">You don't have permission to view routes.</p>
-                </div>
+                <Card>
+                    <CardContent className="flex items-center justify-center h-64">
+                        <div className="text-center">
+                            <RouteIcon className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                            <p className="text-gray-600">You don't have permission to view routes.</p>
+                        </div>
+                    </CardContent>
+                </Card>
             </DashboardLayout>
         );
     }
@@ -250,67 +302,70 @@ export default function RoutesPage() {
         <DashboardLayout>
             <div className="space-y-6">
                 {/* Header */}
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Route Management</h1>
-                        <p className="text-gray-600">Manage bus routes and pickup locations</p>
+                        <h1 className="text-2xl font-bold text-gray-900">Route Management</h1>
+                        <p className="text-sm text-gray-600 mt-1">
+                            Manage bus routes and pickup locations
+                        </p>
                     </div>
-                    {hasPermission('routes:write') && (
-                        <Button className="bg-primary" onClick={handleCreateRoute}>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Route
+                    <div className="block space-y-3 md:space-y-0 items-center gap-5 md:flex">
+                        <Button variant="outline" size="sm" onClick={fetchRoutes} className="w-full sm:w-auto">
+                            <RefreshCw className="w-4 h-4 mr-2" />
+                            Refresh
                         </Button>
-                    )}
+                        {hasPermission('routes:write') && (
+                            <Button onClick={handleCreateRoute} size="sm" className="w-full sm:w-auto">
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Route
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                     <Card className="rounded-sm border-none">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Routes</CardTitle>
-                            <RouteIcon className="h-4 w-4 text-muted-foreground" />
+                            <RouteIcon className="h-4 w-4 text-gray-600" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{routes.length}</div>
+                            <p className="text-xs text-gray-600 mt-1">All registered routes</p>
                         </CardContent>
                     </Card>
                     <Card className="rounded-sm border-none">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Active Routes</CardTitle>
-                            <RouteIcon className="h-4 w-4 text-muted-foreground" />
+                            <RouteIcon className="h-4 w-4 text-green-600" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
-                                {routes.filter(route => route.isActive).length}
-                            </div>
+                            <div className="text-2xl font-bold">{activeRoutes}</div>
+                            <p className="text-xs text-gray-600 mt-1">Currently active</p>
                         </CardContent>
                     </Card>
                     <Card className="rounded-sm border-none">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Avg Price</CardTitle>
-                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                            <DollarSign className="h-4 w-4 text-blue-600" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                LKR: {routes.length > 0 
-                                    ? (totalRevenue / routes.length).toFixed(2)
-                                    : '0.00'
-                                }/=
+                                LKR {routes.length > 0 ? (totalRevenue / routes.length).toFixed(2) : '0.00'}
+                                /=
                             </div>
+                            <p className="text-xs text-gray-600 mt-1">Average route price</p>
                         </CardContent>
                     </Card>
                     <Card className="rounded-sm border-none">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Avg Duration</CardTitle>
-                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <Clock className="h-4 w-4 text-orange-600" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">
-                                {routes.length > 0 
-                                    ? Math.round(routes.reduce((sum, route) => sum + route.duration, 0) / routes.length)
-                                    : 0
-                                } min
-                            </div>
+                            <div className="text-2xl font-bold">{avgDuration} min</div>
+                            <p className="text-xs text-gray-600 mt-1">Average travel time</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -318,130 +373,331 @@ export default function RoutesPage() {
                 {/* Search and Routes Table */}
                 <Card className="rounded-sm border-none">
                     <CardHeader>
-                        <div className="flex items-center space-x-4">
+                        <CardTitle className="text-lg">Route List</CardTitle>
+                        <CardDescription>View and manage all routes in the system</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col gap-4 mb-6">
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                 <Input
                                     type="search"
-                                    placeholder="Search routes..."
+                                    placeholder="Search routes by name or location..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10"
                                 />
                             </div>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                    <SelectTrigger className="w-full sm:w-[160px]">
+                                        <Filter className="w-4 h-4 mr-2" />
+                                        <SelectValue placeholder="Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All Status</SelectItem>
+                                        <SelectItem value="active">Active</SelectItem>
+                                        <SelectItem value="inactive">Inactive</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
-                    </CardHeader>
-                    <CardContent>
+
                         {loading ? (
-                            <div className="flex items-center justify-center h-32">
-                                <p className="text-gray-500">Loading routes...</p>
+                            <div className="flex items-center justify-center h-64">
+                                <div className="text-center">
+                                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+                                    <p className="text-gray-600">Loading routes...</p>
+                                </div>
+                            </div>
+                        ) : filteredRoutes.length === 0 ? (
+                            <div className="flex items-center justify-center h-64">
+                                <div className="text-center">
+                                    <RouteIcon className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                                    <p className="text-gray-600">No routes found</p>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Try adjusting your search or filters
+                                    </p>
+                                </div>
                             </div>
                         ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Route</TableHead>
-                                        <TableHead>From - To</TableHead>
-                                        <TableHead>Pickup Locations</TableHead>
-                                        <TableHead>Distance</TableHead>
-                                        <TableHead>Duration</TableHead>
-                                        <TableHead>Price</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {filteredRoutes?.map((route) => (
-                                        <TableRow key={route._id}>
-                                            <TableCell>
-                                                <div className="flex items-center space-x-3">
-                                                    <RouteIcon className="w-5 h-5 text-gray-400" />
-                                                    <span className="font-medium">{route.name}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                {route.fromLocation} → {route.toLocation}
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {route.pickupLocations?.slice(0, 2).map((location, index) => (
-                                                        <Badge key={index} variant="secondary" className="text-xs">
-                                                            <MapPin className="w-3 h-3 mr-1" />
-                                                            {location}
-                                                        </Badge>
-                                                    ))}
-                                                    {route.pickupLocations?.length > 2 && (
-                                                        <Badge variant="outline" className="text-xs">
-                                                            +{route.pickupLocations.length - 2} more
-                                                        </Badge>
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Route</TableHead>
+                                            <TableHead className="hidden lg:table-cell">From - To</TableHead>
+                                            <TableHead className="hidden md:table-cell">Pickup Locations</TableHead>
+                                            <TableHead className="hidden lg:table-cell">Distance</TableHead>
+                                            <TableHead className="hidden lg:table-cell">Duration</TableHead>
+                                            <TableHead className="hidden md:table-cell">Price</TableHead>
+                                            <TableHead className="hidden md:table-cell">Status</TableHead>
+                                            <TableHead>Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredRoutes.map((route) => (
+                                            <ContextMenu key={route._id}>
+                                                <ContextMenuTrigger asChild>
+                                                    <TableRow className="cursor-context-menu hover:bg-gray-50">
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center flex-shrink-0">
+                                                                    <RouteIcon className="w-5 h-5" />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="font-medium text-gray-900 truncate">
+                                                                        {route.name}
+                                                                    </p>
+                                                                    <p className="text-sm text-gray-600 truncate md:hidden">
+                                                                        {route.fromLocation} → {route.toLocation}
+                                                                    </p>
+                                                                    <div className="flex gap-2 mt-1 md:hidden">
+                                                                        <Badge variant={route.isActive ? 'default' : 'secondary'}>
+                                                                            {route.isActive ? 'Active' : 'Inactive'}
+                                                                        </Badge>
+                                                                        <Badge variant="outline">LKR {route.price?.toFixed(2)}</Badge>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="hidden lg:table-cell">
+                                                            <div className="space-y-1">
+                                                                <p className="font-medium text-gray-900">
+                                                                    {route.fromLocation} → {route.toLocation}
+                                                                </p>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {route.distance} km • {route.duration} min
+                                                                </p>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="hidden md:table-cell">
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {route.pickupLocations?.slice(0, 2).map((location, index) => (
+                                                                    <Badge key={index} variant="secondary" className="text-xs">
+                                                                        <MapPin className="w-3 h-3 mr-1" />
+                                                                        {location}
+                                                                    </Badge>
+                                                                ))}
+                                                                {route.pickupLocations?.length > 2 && (
+                                                                    <Badge variant="outline" className="text-xs">
+                                                                        +{route.pickupLocations.length - 2} more
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="hidden lg:table-cell">
+                                                            {route.distance} km
+                                                        </TableCell>
+                                                        <TableCell className="hidden lg:table-cell">
+                                                            <div className="flex items-center">
+                                                                <Clock className="w-4 h-4 mr-1 text-gray-400" />
+                                                                {route.duration} min
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="hidden md:table-cell">
+                                                            <div className="flex items-center font-medium">
+                                                                <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
+                                                                {route.price?.toFixed(2) || '0.00'}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="hidden md:table-cell">
+                                                            <Badge variant={route.isActive ? 'default' : 'secondary'}>
+                                                                {route.isActive ? 'Active' : 'Inactive'}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild>
+                                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                        <MoreHorizontal className="h-4 w-4" />
+                                                                    </Button>
+                                                                </DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end">
+                                                                    <DropdownMenuItem onClick={() => handleViewDetails(route)}>
+                                                                        <Info className="w-4 h-4 mr-2" />
+                                                                        View Details
+                                                                    </DropdownMenuItem>
+                                                                    {hasPermission('routes:write') && (
+                                                                        <DropdownMenuItem onClick={() => handleEdit(route)}>
+                                                                            <Edit2 className="w-4 h-4 mr-2" />
+                                                                            Edit Route
+                                                                        </DropdownMenuItem>
+                                                                    )}
+                                                                    {hasPermission('routes:delete') && (
+                                                                        <>
+                                                                            <Separator className="my-1" />
+                                                                            <DropdownMenuItem
+                                                                                onClick={() => handleDelete(route)}
+                                                                                className="text-red-600 focus:text-red-600"
+                                                                            >
+                                                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                                                Delete Route
+                                                                            </DropdownMenuItem>
+                                                                        </>
+                                                                    )}
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                </ContextMenuTrigger>
+                                                <ContextMenuContent className="w-56">
+                                                    <ContextMenuItem onClick={() => handleViewDetails(route)}>
+                                                        <Info className="w-4 h-4 mr-2" />
+                                                        View Details
+                                                    </ContextMenuItem>
+                                                    {hasPermission('routes:write') && (
+                                                        <ContextMenuItem onClick={() => handleEdit(route)}>
+                                                            <Edit2 className="w-4 h-4 mr-2" />
+                                                            Edit Route
+                                                        </ContextMenuItem>
                                                     )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{route.distance} km</TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center">
-                                                    <Clock className="w-4 h-4 mr-1 text-gray-400" />
-                                                    {route.duration} min
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center font-medium">
-                                                    <DollarSign className="w-4 h-4 mr-1 text-gray-400" />
-                                                    {route.price?.toFixed(2) || '0.00'}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={route.isActive ? 'default' : 'secondary'}>
-                                                    {route.isActive ? 'Active' : 'Inactive'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        {hasPermission('routes:write') && (
-                                                            <DropdownMenuItem onClick={() => handleEdit(route)}>
-                                                                <Edit2 className="w-4 h-4 mr-2" />
-                                                                Edit Route
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                        {hasPermission('routes:delete') && (
-                                                            <DropdownMenuItem
+                                                    {hasPermission('routes:delete') && (
+                                                        <>
+                                                            <ContextMenuSeparator />
+                                                            <ContextMenuItem
                                                                 onClick={() => handleDelete(route)}
-                                                                className="text-red-600 hover:text-red-700"
+                                                                className="text-red-600 focus:text-red-600"
                                                             >
                                                                 <Trash2 className="w-4 h-4 mr-2" />
                                                                 Delete Route
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                                            </ContextMenuItem>
+                                                        </>
+                                                    )}
+                                                </ContextMenuContent>
+                                            </ContextMenu>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         )}
                     </CardContent>
                 </Card>
 
-                {/* Modal */}
+                {/* Route Details Modal */}
+                <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+                    <DialogContent className="sm:max-w-[525px]">
+                        <DialogHeader>
+                            <DialogTitle>Route Details</DialogTitle>
+                            <DialogDescription>Complete route information</DialogDescription>
+                        </DialogHeader>
+                        {selectedRoute && (
+                            <ScrollArea className="max-h-[60vh]">
+                                <div className="grid gap-4 py-4">
+                                    <div className="flex flex-col items-center text-center pb-4 border-b">
+                                        <div className="w-20 h-20 bg-primary text-white rounded-full flex items-center justify-center mb-3">
+                                            <RouteIcon className="w-10 h-10" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-900">
+                                            {selectedRoute.name}
+                                        </h3>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            {selectedRoute.fromLocation} → {selectedRoute.toLocation}
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-gray-500">From Location</p>
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="w-4 h-4 text-gray-400" />
+                                                <p className="text-sm font-medium">{selectedRoute.fromLocation}</p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-gray-500">To Location</p>
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="w-4 h-4 text-gray-400" />
+                                                <p className="text-sm font-medium">{selectedRoute.toLocation}</p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-gray-500">Distance</p>
+                                            <p className="text-sm font-medium">{selectedRoute.distance} km</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-gray-500">Duration</p>
+                                            <div className="flex items-center gap-2">
+                                                <Clock className="w-4 h-4 text-gray-400" />
+                                                <p className="text-sm font-medium">{selectedRoute.duration} min</p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-gray-500">Price</p>
+                                            <div className="flex items-center gap-2">
+                                                <DollarSign className="w-4 h-4 text-gray-400" />
+                                                <p className="text-sm font-medium">
+                                                    LKR {selectedRoute.price?.toFixed(2) || '0.00'}/=
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm text-gray-500">Status</p>
+                                            <Badge variant={selectedRoute.isActive ? 'default' : 'secondary'}>
+                                                {selectedRoute.isActive ? 'Active' : 'Inactive'}
+                                            </Badge>
+                                        </div>
+                                        <div className="space-y-1 col-span-2">
+                                            <p className="text-sm text-gray-500">Pickup Locations</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedRoute.pickupLocations?.length > 0 ? (
+                                                    selectedRoute.pickupLocations.map((location, index) => (
+                                                        <Badge key={index} variant="secondary">
+                                                            <MapPin className="w-3 h-3 mr-1" />
+                                                            {location}
+                                                        </Badge>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-sm text-gray-500">No pickup locations</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </ScrollArea>
+                        )}
+                        <DialogFooter className="gap-2">
+                            {hasPermission('routes:write') && selectedRoute && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handleEdit(selectedRoute)}
+                                    className="w-full sm:w-auto"
+                                >
+                                    <Edit2 className="w-4 h-4 mr-2" />
+                                    Edit Route
+                                </Button>
+                            )}
+                            {hasPermission('routes:delete') && selectedRoute && (
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => handleDelete(selectedRoute)}
+                                    className="w-full sm:w-auto"
+                                >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Route
+                                </Button>
+                            )}
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Create/Edit Route Modal */}
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                    <DialogContent className="sm:max-w-[525px] bg-sky-100">
+                    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>{editingRoute ? 'Edit Route' : 'Add New Route'}</DialogTitle>
                             <DialogDescription>
-                                {editingRoute ? 'Update route information.' : 'Create a new bus route with pickup locations.'}
+                                {editingRoute
+                                    ? 'Update route information.'
+                                    : 'Create a new bus route with pickup locations.'}
                             </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleSubmit}>
-                            <div className="grid gap-4 py-4">
+                            <div className="space-y-4 py-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name">Route Name</Label>
+                                    <Label htmlFor="name">
+                                        Route Name <span className="text-red-500">*</span>
+                                    </Label>
                                     <Input
                                         id="name"
                                         value={formData.name}
@@ -449,36 +705,42 @@ export default function RoutesPage() {
                                         placeholder="Enter route name"
                                         className={errors.name ? 'border-red-500' : ''}
                                     />
-                                    {errors.name && (
-                                        <p className="text-sm text-red-600">{errors.name}</p>
-                                    )}
+                                    {errors.name && <p className="text-xs text-red-600">{errors.name}</p>}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="fromLocation">From Location</Label>
+                                        <Label htmlFor="fromLocation">
+                                            From Location <span className="text-red-500">*</span>
+                                        </Label>
                                         <Input
                                             id="fromLocation"
                                             value={formData.fromLocation}
-                                            onChange={(e) => setFormData({ ...formData, fromLocation: e.target.value })}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, fromLocation: e.target.value })
+                                            }
                                             placeholder="Starting point"
                                             className={errors.fromLocation ? 'border-red-500' : ''}
                                         />
                                         {errors.fromLocation && (
-                                            <p className="text-sm text-red-600">{errors.fromLocation}</p>
+                                            <p className="text-xs text-red-600">{errors.fromLocation}</p>
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="toLocation">To Location</Label>
+                                        <Label htmlFor="toLocation">
+                                            To Location <span className="text-red-500">*</span>
+                                        </Label>
                                         <Input
                                             id="toLocation"
                                             value={formData.toLocation}
-                                            onChange={(e) => setFormData({ ...formData, toLocation: e.target.value })}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, toLocation: e.target.value })
+                                            }
                                             placeholder="Destination"
                                             className={errors.toLocation ? 'border-red-500' : ''}
                                         />
                                         {errors.toLocation && (
-                                            <p className="text-sm text-red-600">{errors.toLocation}</p>
+                                            <p className="text-xs text-red-600">{errors.toLocation}</p>
                                         )}
                                     </div>
                                 </div>
@@ -491,6 +753,12 @@ export default function RoutesPage() {
                                             onChange={(e) => setNewPickupLocation(e.target.value)}
                                             placeholder="Enter pickup location"
                                             className="flex-1"
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    addPickupLocation();
+                                                }
+                                            }}
                                         />
                                         <Button type="button" onClick={addPickupLocation} variant="outline">
                                             Add
@@ -512,59 +780,83 @@ export default function RoutesPage() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="distance">Distance (km)</Label>
+                                        <Label htmlFor="distance">
+                                            Distance (km) <span className="text-red-500">*</span>
+                                        </Label>
                                         <Input
                                             id="distance"
                                             type="number"
                                             value={formData.distance}
-                                            onChange={(e) => setFormData({ ...formData, distance: Number(e.target.value) })}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, distance: Number(e.target.value) })
+                                            }
                                             min="0"
                                             step="0.1"
                                             className={errors.distance ? 'border-red-500' : ''}
                                         />
                                         {errors.distance && (
-                                            <p className="text-sm text-red-600">{errors.distance}</p>
+                                            <p className="text-xs text-red-600">{errors.distance}</p>
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="duration">Duration (min)</Label>
+                                        <Label htmlFor="duration">
+                                            Duration (min) <span className="text-red-500">*</span>
+                                        </Label>
                                         <Input
                                             id="duration"
                                             type="number"
                                             value={formData.duration}
-                                            onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, duration: Number(e.target.value) })
+                                            }
                                             min="0"
                                             className={errors.duration ? 'border-red-500' : ''}
                                         />
                                         {errors.duration && (
-                                            <p className="text-sm text-red-600">{errors.duration}</p>
+                                            <p className="text-xs text-red-600">{errors.duration}</p>
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="price">Price (LKR)</Label>
+                                        <Label htmlFor="price">
+                                            Price (LKR) <span className="text-red-500">*</span>
+                                        </Label>
                                         <Input
                                             id="price"
                                             type="number"
                                             value={formData.price}
-                                            onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, price: Number(e.target.value) })
+                                            }
                                             min="0"
                                             step="0.01"
                                             className={errors.price ? 'border-red-500' : ''}
                                         />
-                                        {errors.price && (
-                                            <p className="text-sm text-red-600">{errors.price}</p>
-                                        )}
+                                        {errors.price && <p className="text-xs text-red-600">{errors.price}</p>}
                                     </div>
                                 </div>
                             </div>
-                            <DialogFooter>
-                                <Button type="button" onClick={resetForm} className="bg-gray-500 hover:bg-gray-600">
+                            <DialogFooter className="gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={resetForm}
+                                    className="w-full sm:w-auto"
+                                >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={formLoading} className="bg-primary">
-                                    {formLoading ? (editingRoute ? 'Updating...' : 'Creating...') : (editingRoute ? 'Update Route' : 'Create Route')}
+                                <Button type="submit" disabled={formLoading} className="w-full sm:w-auto">
+                                    {formLoading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            {editingRoute ? 'Updating...' : 'Creating...'}
+                                        </>
+                                    ) : editingRoute ? (
+                                        'Update Route'
+                                    ) : (
+                                        'Create Route'
+                                    )}
                                 </Button>
                             </DialogFooter>
                         </form>
@@ -575,10 +867,13 @@ export default function RoutesPage() {
                 <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
                                 This action cannot be undone. This will permanently delete the route
-                                {selectedRoute && ` "${selectedRoute.name}"`} and remove it from the system.
+                                {selectedRoute && (
+                                    <span className="font-semibold"> "{selectedRoute.name}"</span>
+                                )}{' '}
+                                and remove it from the system.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

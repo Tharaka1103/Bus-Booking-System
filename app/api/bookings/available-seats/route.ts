@@ -9,7 +9,9 @@ import { ApiResponse } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const token = request.cookies.get('authToken')?.value || 
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+    
     if (!token) {
       return NextResponse.json<ApiResponse>({
         success: false,
@@ -30,6 +32,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const busId = searchParams.get('busId');
     const travelDate = searchParams.get('travelDate');
+    const excludeBookingId = searchParams.get('excludeBookingId');
 
     if (!busId || !travelDate) {
       return NextResponse.json<ApiResponse>({
@@ -54,11 +57,18 @@ export async function GET(request: NextRequest) {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const bookings = await Booking.find({
+    const query: any = {
       busId,
       travelDate: { $gte: startOfDay, $lte: endOfDay },
       status: { $ne: 'cancelled' }
-    });
+    };
+
+    // Exclude specific booking if provided (for editing)
+    if (excludeBookingId) {
+      query._id = { $ne: excludeBookingId };
+    }
+
+    const bookings = await Booking.find(query);
 
     const bookedSeats = bookings.reduce((acc, booking) => {
       return [...acc, ...booking.seatNumbers];
@@ -78,6 +88,7 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
+    console.error('Error fetching available seats:', error);
     return NextResponse.json<ApiResponse>({
       success: false,
       message: 'Error fetching available seats'

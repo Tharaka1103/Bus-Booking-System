@@ -1,9 +1,7 @@
-// app/book-ticket/page.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import {
   Bus,
@@ -51,6 +49,7 @@ interface BookingFormData {
 
 export default function BookTicketPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
   const [routes, setRoutes] = useState<IRoute[]>([]);
@@ -77,99 +76,95 @@ export default function BookTicketPage() {
   const [selectedRoute, setSelectedRoute] = useState<IRoute | null>(null);
   const [selectedBus, setSelectedBus] = useState<IBus | null>(null);
 
-  // Add this after the state declarations and before the useEffect hooks
+  // Helper Functions
+  const isBusLocked = (bus: any, travelDate: string) => {
+    if (!travelDate || !bus || !bus.departureTime) return false;
 
-const isBusLocked = (bus: any, travelDate: string) => {
-  if (!travelDate || !bus || !bus.departureTime) return false;
+    try {
+      const selectedDate = new Date(travelDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      selectedDate.setHours(0, 0, 0, 0);
 
-  try {
-    const selectedDate = new Date(travelDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    selectedDate.setHours(0, 0, 0, 0);
+      if (selectedDate.getTime() !== today.getTime()) {
+        return false;
+      }
 
-    // Only lock if travel date is today
-    if (selectedDate.getTime() !== today.getTime()) {
+      const now = new Date();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      
+      const [hours, minutes] = bus.departureTime.split(':').map(Number);
+      
+      if (isNaN(hours) || isNaN(minutes)) {
+        return false;
+      }
+      
+      const departureTimeInMinutes = hours * 60 + minutes;
+      const timeDifference = departureTimeInMinutes - currentTime;
+
+      return timeDifference < 30 && timeDifference >= 0;
+    } catch (error) {
+      console.error('Error checking bus lock status:', error);
       return false;
     }
+  };
 
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    
-    const [hours, minutes] = bus.departureTime.split(':').map(Number);
-    
-    // Validate parsed values
-    if (isNaN(hours) || isNaN(minutes)) {
-      return false;
-    }
-    
-    const departureTimeInMinutes = hours * 60 + minutes;
-    const timeDifference = departureTimeInMinutes - currentTime;
+  const getTimeToDeparture = (bus: any, travelDate: string) => {
+    if (!travelDate || !bus || !bus.departureTime) return null;
 
-    // Lock if departure is in less than 30 minutes
-    return timeDifference < 30 && timeDifference >= 0;
-  } catch (error) {
-    console.error('Error checking bus lock status:', error);
-    return false;
-  }
-};
+    try {
+      const selectedDate = new Date(travelDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      selectedDate.setHours(0, 0, 0, 0);
 
-const getTimeToDeparture = (bus: any, travelDate: string) => {
-  if (!travelDate || !bus || !bus.departureTime) return null;
+      if (selectedDate.getTime() !== today.getTime()) {
+        return null;
+      }
 
-  try {
-    const selectedDate = new Date(travelDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    selectedDate.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      
+      const [hours, minutes] = bus.departureTime.split(':').map(Number);
+      
+      if (isNaN(hours) || isNaN(minutes)) {
+        return null;
+      }
+      
+      const departureTimeInMinutes = hours * 60 + minutes;
+      const timeDifference = departureTimeInMinutes - currentTime;
 
-    if (selectedDate.getTime() !== today.getTime()) {
+      if (timeDifference < 60 && timeDifference >= 0) {
+        return `Departs in ${timeDifference} min`;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error getting time to departure:', error);
       return null;
     }
+  };
 
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
+  const formatTime = (time?: string) => {
+    if (!time) return 'Not set';
     
-    const [hours, minutes] = bus.departureTime.split(':').map(Number);
-    
-    // Validate parsed values
-    if (isNaN(hours) || isNaN(minutes)) {
-      return null;
-    }
-    
-    const departureTimeInMinutes = hours * 60 + minutes;
-    const timeDifference = departureTimeInMinutes - currentTime;
-
-    if (timeDifference < 60 && timeDifference >= 0) {
-      return `Departs in ${timeDifference} min`;
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error getting time to departure:', error);
-    return null;
-  }
-};
-
-const formatTime = (time?: string) => {
-  if (!time) return 'Not set';
-  
-  try {
-    const [hours, minutes] = time.split(':');
-    const hour = parseInt(hours);
-    
-    if (isNaN(hour)) {
+    try {
+      const [hours, minutes] = time.split(':');
+      const hour = parseInt(hours);
+      
+      if (isNaN(hour)) {
+        return 'Not set';
+      }
+      
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${minutes} ${ampm}`;
+    } catch (error) {
+      console.error('Error formatting time:', error);
       return 'Not set';
     }
-    
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
-  } catch (error) {
-    console.error('Error formatting time:', error);
-    return 'Not set';
-  }
-};
+  };
+
   const getRouteCardBackground = (route: IRoute) => {
     const fromLocation = route.fromLocation.toLowerCase();
     const toLocation = route.toLocation.toLowerCase();
@@ -204,9 +199,33 @@ const formatTime = (time?: string) => {
 
   const backgroundImage = getBackgroundImage();
 
+  // UseEffect Hooks
   useEffect(() => {
     fetchRoutes();
   }, []);
+
+  useEffect(() => {
+    const routeId = searchParams.get('routeId');
+    
+    if (routeId && routes.length > 0 && !selectedRoute) {
+      const preSelectedRoute = routes.find(r => r._id === routeId);
+      
+      if (preSelectedRoute) {
+        setSelectedRoute(preSelectedRoute);
+        setFormData(prev => ({ 
+          ...prev, 
+          routeId: routeId,
+          busId: '',
+          seatNumbers: [],
+          pickupLocation: ''
+        }));
+        
+        setCurrentStep(2);
+        
+        toast.success(`Route selected: ${preSelectedRoute.fromLocation} → ${preSelectedRoute.toLocation}`);
+      }
+    }
+  }, [searchParams, routes, selectedRoute]);
 
   useEffect(() => {
     if (formData.routeId) {
@@ -220,6 +239,7 @@ const formatTime = (time?: string) => {
     }
   }, [formData.busId, formData.travelDate]);
 
+  // API Functions
   const fetchRoutes = async () => {
     try {
       const response = await fetch('/api/routes');
@@ -234,7 +254,6 @@ const formatTime = (time?: string) => {
 
   const fetchBusesByRoute = async (routeId: string) => {
     try {
-      // Use public API endpoint with routeId parameter
       const response = await fetch(`/api/public/buses?routeId=${routeId}`);
       const data = await response.json();
 
@@ -269,6 +288,7 @@ const formatTime = (time?: string) => {
     }
   };
 
+  // Handler Functions
   const handleRouteSelect = (route: IRoute) => {
     setSelectedRoute(route);
     setFormData({ ...formData, routeId: route._id, busId: '', seatNumbers: [], pickupLocation: '' });
@@ -344,6 +364,7 @@ const formatTime = (time?: string) => {
       setCurrentStep(newStep);
 
       if (newStep === 1) {
+        router.replace('/booking', { scroll: false });
         setSelectedRoute(null);
         setSelectedBus(null);
         setFormData({
@@ -366,6 +387,7 @@ const formatTime = (time?: string) => {
   const handleStepClick = (step: number) => {
     if (step === 1) {
       setCurrentStep(1);
+      router.replace('/booking', { scroll: false });
       setSelectedRoute(null);
       setSelectedBus(null);
       setFormData({
@@ -627,7 +649,6 @@ const formatTime = (time?: string) => {
               sizes="100vw"
               className="object-cover"
             />
-            {/* Overlay for better text readability */}
             <div className="absolute inset-0 bg-black/50"></div>
           </div>
         </>

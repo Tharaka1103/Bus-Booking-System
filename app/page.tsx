@@ -6,19 +6,18 @@ import WhyChooseUsSection from '@/components/sections/WhyChooseUsSection';
 import FAQSection from '@/components/sections/FAQSection';
 import ContactSection from '@/components/sections/ContactSection';
 import BookingSection from '@/components/sections/BookingSection';
-import {Preloader} from '@/components/Preloader'
-import FeedbackSection from '@/components/FeedbackSection';
+import { Preloader } from '@/components/Preloader'
+import FeedbackSection from '@/components/sections/FeedbackSection';
 export default function HomePage() {
   return (
     <main className="min-h-screen">
-      <HeroSection/>
+      <HeroSection />
       <AboutSection />
-      <ServicesSection />
       <PopularRoutesSection />
-            <BookingSection />
+      <ServicesSection />
       <WhyChooseUsSection />
       <FAQSection />
-      <FeedbackSection/>
+      <FeedbackSection />
       <ContactSection />
     </main>
   );

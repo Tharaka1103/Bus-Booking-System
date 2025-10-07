@@ -12,7 +12,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params; // Await the params here
+    const { id } = await params;
     
     const token = request.cookies.get('authToken')?.value || 
                   request.headers.get('authorization')?.replace('Bearer ', '');
@@ -64,7 +64,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params; // Await the params here
+    const { id } = await params;
     
     const token = request.cookies.get('authToken')?.value || 
                   request.headers.get('authorization')?.replace('Bearer ', '');
@@ -87,6 +87,58 @@ export async function PUT(
     const body: UpdateBookingRequest = await request.json();
     await connectToDatabase();
 
+    // Get existing booking
+    const existingBooking = await Booking.findById(id);
+    if (!existingBooking) {
+      return NextResponse.json<ApiResponse>({
+        success: false,
+        message: 'Booking not found'
+      }, { status: 404 });
+    }
+
+    // Check if booking is within 7-day modification period
+    const bookingDate = new Date(existingBooking.bookingDate);
+    const currentDate = new Date();
+    const daysDifference = Math.floor((currentDate.getTime() - bookingDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysDifference > 7 && existingBooking.status !== 'cancelled') {
+      return NextResponse.json<ApiResponse>({
+        success: false,
+        message: 'Booking can only be modified within 7 days of booking date'
+      }, { status: 400 });
+    }
+
+    // If travel date is being changed, check seat availability
+    if (body.travelDate || body.seatNumbers) {
+      const travelDate = body.travelDate ? new Date(body.travelDate) : existingBooking.travelDate;
+      const seatNumbers = body.seatNumbers || existingBooking.seatNumbers;
+      
+      const startOfDay = new Date(travelDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(travelDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // Check for conflicting bookings (excluding current booking)
+      const conflictingBookings = await Booking.find({
+        _id: { $ne: id },
+        busId: existingBooking.busId,
+        travelDate: { $gte: startOfDay, $lte: endOfDay },
+        status: { $ne: 'cancelled' },
+        seatNumbers: { $in: seatNumbers }
+      });
+
+      if (conflictingBookings.length > 0) {
+        const bookedSeats = conflictingBookings.reduce((acc, booking) => {
+          return [...acc, ...booking.seatNumbers];
+        }, [] as number[]);
+        
+        return NextResponse.json<ApiResponse>({
+          success: false,
+          message: `Some seats are already booked: ${bookedSeats.join(', ')}`
+        }, { status: 400 });
+      }
+    }
+
     const booking = await Booking.findByIdAndUpdate(
       id,
       body,
@@ -96,19 +148,13 @@ export async function PUT(
       .populate('busId', 'busNumber type capacity')
       .populate('routeId', 'name fromLocation toLocation price');
 
-    if (!booking) {
-      return NextResponse.json<ApiResponse>({
-        success: false,
-        message: 'Booking not found'
-      }, { status: 404 });
-    }
-
     return NextResponse.json<ApiResponse>({
       success: true,
       message: 'Booking updated successfully',
       data: booking
     });
   } catch (error) {
+    console.error('Error updating booking:', error);
     return NextResponse.json<ApiResponse>({
       success: false,
       message: 'Error updating booking'
@@ -122,7 +168,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params; // Await the params here
+    const { id } = await params;
     
     const token = request.cookies.get('authToken')?.value || 
                   request.headers.get('authorization')?.replace('Bearer ', '');

@@ -1,17 +1,46 @@
-// app/super_admin/dashboard/page.tsx
 'use client';
 
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Users, Bus, Route, TrendingUp, Calendar, ChevronRight, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import {
-    PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
-    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+    Users,
+    Bus,
+    Route,
+    TrendingUp,
+    ChevronRight,
+    Loader2,
+    DollarSign,
+    Calendar,
+    BarChart3,
+    PieChart as PieChartIcon,
+    RefreshCw,
+    ChevronDown,
+    ArrowUpRight,
+    ArrowDownRight,
+} from 'lucide-react';
+import {
+    PieChart,
+    Pie,
+    Cell,
+    BarChart,
+    Bar,
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
 } from 'recharts';
+import { cn } from '@/lib/utils';
 
 interface DashboardData {
     totalUsers: number;
@@ -56,7 +85,6 @@ export default function SuperAdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
     const [routesWithBuses, setRoutesWithBuses] = useState<RouteWithBuses[]>([]);
-    const [selectedBus, setSelectedBus] = useState<string | null>(null);
     const [busDetails, setBusDetails] = useState<BusSeatDetails | null>(null);
     const [showBusModal, setShowBusModal] = useState(false);
     const [expandedRoutes, setExpandedRoutes] = useState<Set<string>>(new Set());
@@ -73,7 +101,7 @@ export default function SuperAdminDashboard() {
             setLoading(true);
             const [analyticsResponse, routesResponse] = await Promise.all([
                 fetch('/api/dashboard/analysis', { credentials: 'include' }),
-                fetch('/api/dashboard/routes-buses', { credentials: 'include' })
+                fetch('/api/dashboard/routes-buses', { credentials: 'include' }),
             ]);
 
             if (analyticsResponse.ok && routesResponse.ok) {
@@ -90,24 +118,22 @@ export default function SuperAdminDashboard() {
         }
     };
 
-    // In your dashboard component, make sure you're passing the date correctly
     const fetchBusDetails = async (busId: string) => {
         try {
-            // Make sure we're using the correct date format
             const today = new Date();
-            const todayStr = today.getFullYear() + '-' +
-                String(today.getMonth() + 1).padStart(2, '0') + '-' +
+            const todayStr =
+                today.getFullYear() +
+                '-' +
+                String(today.getMonth() + 1).padStart(2, '0') +
+                '-' +
                 String(today.getDate()).padStart(2, '0');
 
-            console.log('Fetching bus details for date:', todayStr); // Debug log
-
             const response = await fetch(`/api/dashboard/bus-seats/${busId}?date=${todayStr}`, {
-                credentials: 'include'
+                credentials: 'include',
             });
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('Bus details response:', data); // Debug log
                 setBusDetails(data.data);
                 setShowBusModal(true);
             }
@@ -129,8 +155,11 @@ export default function SuperAdminDashboard() {
     if (loading) {
         return (
             <DashboardLayout>
-                <div className="flex items-center justify-center h-64">
-                    <Loader2 className="w-8 h-8 animate-spin" />
+                <div className="flex items-center justify-center h-screen">
+                    <div className="text-center">
+                        <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-primary" />
+                        <p className="text-gray-600">Loading dashboard analytics...</p>
+                    </div>
                 </div>
             </DashboardLayout>
         );
@@ -139,22 +168,33 @@ export default function SuperAdminDashboard() {
     if (!dashboardData) {
         return (
             <DashboardLayout>
-                <div className="text-center py-8">Failed to load dashboard data</div>
+                <Card>
+                    <CardContent className="flex items-center justify-center h-64">
+                        <div className="text-center">
+                            <BarChart3 className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                            <p className="text-gray-600">Failed to load dashboard data</p>
+                            <Button onClick={fetchDashboardData} variant="outline" className="mt-4">
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Retry
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
             </DashboardLayout>
         );
     }
 
-    const pieData = dashboardData.bookingStats.map(stat => ({
+    const pieData = dashboardData.bookingStats.map((stat) => ({
         name: stat._id.charAt(0).toUpperCase() + stat._id.slice(1),
-        value: stat.count
+        value: stat.count,
     }));
 
     const lineChartData = Array.from({ length: 30 }, (_, i) => {
-        const dayData = dashboardData.dailyBookings.find(d => d._id === i + 1);
+        const dayData = dashboardData.dailyBookings.find((d) => d._id === i + 1);
         return {
             day: i + 1,
             bookings: dayData?.bookings || 0,
-            revenue: dayData?.revenue || 0
+            revenue: dayData?.revenue || 0,
         };
     });
 
@@ -162,59 +202,102 @@ export default function SuperAdminDashboard() {
         <DashboardLayout>
             <div className="space-y-6">
                 {/* Welcome Section */}
-                <div className="bg-primary rounded-sm p-8 text-white">
-                    <h1 className="text-3xl font-bold mb-2">
-                        Welcome back, {user?.firstName} {user?.lastName}!
-                    </h1>
-                    <p className="text-blue-100 text-lg">
-                        System Analytics Dashboard - Real-time insights
-                    </p>
-                </div>
+                <Card className="bg-gradient-to-r from-primary to-blue-600 border-none text-white overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24" />
+                    <CardContent className="relative z-10 p-6 sm:p-8">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+                                    Welcome back, {user?.firstName}! 👋
+                                </h1>
+                                <p className="text-blue-100 text-sm sm:text-base">
+                                    System Analytics Dashboard - Real-time insights and performance metrics
+                                </p>
+                            </div>
+                            <Button
+                                onClick={fetchDashboardData}
+                                variant="secondary"
+                                size="sm"
+                                className="flex-shrink-0"
+                            >
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Refresh
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <Card className="bg-white rounded-sm">
-                        <CardHeader className="pb-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <Users className="h-5 w-5 text-blue-600" />
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{dashboardData.totalUsers}</div>
+                            <p className="text-xs text-gray-500 mt-1">Registered users</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-white rounded-sm">
-                        <CardHeader className="pb-2">
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-gray-600">Active Buses</CardTitle>
+                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <Bus className="h-5 w-5 text-green-600" />
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{dashboardData.totalBuses}</div>
+                            <p className="text-xs text-gray-500 mt-1">In fleet</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-white rounded-sm">
-                        <CardHeader className="pb-2">
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-gray-600">Active Routes</CardTitle>
+                            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <Route className="h-5 w-5 text-purple-600" />
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{dashboardData.totalRoutes}</div>
+                            <p className="text-xs text-gray-500 mt-1">Operational routes</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-white rounded-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600">Monthly Bookings</CardTitle>
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-gray-600">
+                                Monthly Bookings
+                            </CardTitle>
+                            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                <Calendar className="h-5 w-5 text-orange-600" />
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{dashboardData.monthlyBookings}</div>
+                            <p className="text-xs text-gray-500 mt-1">This month</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="bg-white rounded-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-gray-600">Monthly Revenue</CardTitle>
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-gray-600">
+                                Monthly Revenue
+                            </CardTitle>
+                            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                <DollarSign className="h-5 w-5 text-emerald-600" />
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">LKR {dashboardData.revenue.toLocaleString()}</div>
+                            <div className="text-2xl font-bold">
+                                LKR {dashboardData.revenue.toLocaleString()}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">Total revenue</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -222,46 +305,81 @@ export default function SuperAdminDashboard() {
                 {/* Charts Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Booking Status Pie Chart */}
-                    <Card className="bg-white rounded-sm">
+                    <Card>
                         <CardHeader>
-                            <CardTitle>Booking Status Distribution</CardTitle>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Booking Status Distribution</CardTitle>
+                                    <CardDescription className="mt-1">
+                                        Overview of all booking statuses
+                                    </CardDescription>
+                                </div>
+                                <PieChartIcon className="h-5 w-5 text-gray-400" />
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
+                            <ResponsiveContainer width="100%" height={350}>
                                 <PieChart>
                                     <Pie
                                         data={pieData}
                                         cx="50%"
                                         cy="50%"
                                         labelLine={false}
-                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                        outerRadius={80}
+                                        label={({ name, percent }) =>
+                                            `${name} ${(percent * 100).toFixed(0)}%`
+                                        }
+                                        outerRadius={120}
                                         fill="#8884d8"
                                         dataKey="value"
                                     >
                                         {pieData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={COLORS[index % COLORS.length]}
+                                            />
                                         ))}
                                     </Pie>
                                     <Tooltip />
+                                    <Legend />
                                 </PieChart>
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
 
                     {/* Route Performance Bar Chart */}
-                    <Card className="bg-white rounded-sm">
+                    <Card>
                         <CardHeader>
-                            <CardTitle>Top Routes by Bookings</CardTitle>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Top Routes by Bookings</CardTitle>
+                                    <CardDescription className="mt-1">
+                                        Most popular routes this month
+                                    </CardDescription>
+                                </div>
+                                <BarChart3 className="h-5 w-5 text-gray-400" />
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
+                            <ResponsiveContainer width="100%" height={350}>
                                 <BarChart data={dashboardData.bookingsByRoute.slice(0, 5)}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="routeName" angle={-45} textAnchor="end" height={80} />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Bar dataKey="bookings" fill="#3B82F6" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                    <XAxis
+                                        dataKey="routeName"
+                                        angle={-20}
+                                        textAnchor="end"
+                                        height={100}
+                                        tick={{ fontSize: 12 }}
+                                    />
+                                    <YAxis tick={{ fontSize: 12 }} />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: 'white',
+                                            border: '1px solid #e5e7eb',
+                                            borderRadius: '8px',
+                                        }}
+                                    />
+                                    <Legend />
+                                    <Bar dataKey="bookings" fill="#3B82F6" name="Bookings" radius={[8, 8, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </CardContent>
@@ -269,182 +387,337 @@ export default function SuperAdminDashboard() {
                 </div>
 
                 {/* Daily Bookings Line Chart */}
-                <Card className="bg-white rounded-sm">
+                <Card>
                     <CardHeader>
-                        <CardTitle>Daily Bookings Trend (This Month)</CardTitle>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div>
+                                <CardTitle>Daily Bookings & Revenue Trend</CardTitle>
+                                <CardDescription className="mt-1">
+                                    Performance overview for this month
+                                </CardDescription>
+                            </div>
+                            <Badge variant="outline" className="self-start sm:self-center">
+                                <TrendingUp className="w-3 h-3 mr-1" />
+                                Last 30 days
+                            </Badge>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer width="100%" height={400}>
                             <LineChart data={lineChartData}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="day" />
-                                <YAxis yAxisId="left" />
-                                <YAxis yAxisId="right" orientation="right" />
-                                <Tooltip />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                <XAxis dataKey="day" tick={{ fontSize: 12 }} label={{ value: 'Day of Month', position: 'insideBottom', offset: -5 }} />
+                                <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+                                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'white',
+                                        border: '1px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                    }}
+                                />
                                 <Legend />
-                                <Line yAxisId="left" type="monotone" dataKey="bookings" stroke="#3B82F6" name="Bookings" />
-                                <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#10B981" name="Revenue (LKR)" />
+                                <Line
+                                    yAxisId="left"
+                                    type="monotone"
+                                    dataKey="bookings"
+                                    stroke="#3B82F6"
+                                    strokeWidth={2}
+                                    name="Bookings"
+                                    dot={{ r: 3 }}
+                                    activeDot={{ r: 5 }}
+                                />
+                                <Line
+                                    yAxisId="right"
+                                    type="monotone"
+                                    dataKey="revenue"
+                                    stroke="#10B981"
+                                    strokeWidth={2}
+                                    name="Revenue (LKR)"
+                                    dot={{ r: 3 }}
+                                    activeDot={{ r: 5 }}
+                                />
                             </LineChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
 
                 {/* Routes and Buses Section */}
-                <Card className="bg-white rounded-sm">
+                <Card>
                     <CardHeader>
-                        <CardTitle>Routes and Bus Occupancy</CardTitle>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Routes & Bus Occupancy</CardTitle>
+                                <CardDescription className="mt-1">
+                                    Real-time seat availability and occupancy rates
+                                </CardDescription>
+                            </div>
+                            <Badge variant="secondary">{routesWithBuses.length} Routes</Badge>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {routesWithBuses.map((route) => (
-                                <div key={route._id} className="border rounded-lg p-4">
-                                    <div
-                                        className="flex items-center justify-between cursor-pointer"
-                                        onClick={() => toggleRoute(route._id)}
-                                    >
-                                        <div>
-                                            <h3 className="font-semibold">{route.name}</h3>
-                                            <p className="text-sm text-gray-600">
-                                                {route.fromLocation} → {route.toLocation}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <span className="text-sm text-gray-500">{route.buses.length} buses</span>
-                                            <ChevronRight
-                                                className={`w-5 h-5 transition-transform ${expandedRoutes.has(route._id) ? 'rotate-90' : ''
-                                                    }`}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {expandedRoutes.has(route._id) && (
-                                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {route.buses.map((bus) => (
-                                                <div
-                                                    key={bus._id}
-                                                    className="bg-card p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                                                    onClick={() => fetchBusDetails(bus._id)}
-                                                >
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div>
-                                                            <p className="font-medium">{bus.busNumber}</p>
-                                                            <p className="text-xs text-gray-500 capitalize">{bus.type}</p>
-                                                        </div>
-                                                        <span className={`text-xs px-2 py-1 rounded-full ${parseFloat(bus.occupancyRate) > 80
-                                                            ? 'bg-red-100 text-red-700'
-                                                            : parseFloat(bus.occupancyRate) > 50
-                                                                ? 'bg-yellow-100 text-yellow-700'
-                                                                : 'bg-green-100 text-green-700'
-                                                            }`}>
-                                                            {bus.occupancyRate}%
-                                                        </span>
+                        <ScrollArea className="h-[600px] pr-4">
+                            <div className="space-y-4">
+                                {routesWithBuses.map((route) => (
+                                    <Card key={route._id} className="border-2 hover:border-primary/50 transition-all">
+                                        <CardHeader
+                                            className="cursor-pointer hover:bg-gray-50 transition-colors"
+                                            onClick={() => toggleRoute(route._id)}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <Route className="w-5 h-5 text-primary flex-shrink-0" />
+                                                        <h3 className="font-semibold text-lg truncate">
+                                                            {route.name}
+                                                        </h3>
                                                     </div>
-                                                    <div className="space-y-1">
-                                                        <div className="flex justify-between text-xs">
-                                                            <span className="text-gray-600">Capacity:</span>
-                                                            <span className="font-medium">{bus.capacity}</span>
-                                                        </div>
-                                                        <div className="flex justify-between text-xs">
-                                                            <span className="text-gray-600">Booked:</span>
-                                                            <span className="font-medium text-red-600">{bus.bookedSeats}</span>
-                                                        </div>
-                                                        <div className="flex justify-between text-xs">
-                                                            <span className="text-gray-600">Available:</span>
-                                                            <span className="font-medium text-green-600">{bus.availableSeats}</span>
-                                                        </div>
-                                                    </div>
+                                                    <p className="text-sm text-gray-600 flex items-center gap-1">
+                                                        <span className="truncate">{route.fromLocation}</span>
+                                                        <ArrowUpRight className="w-3 h-3 flex-shrink-0" />
+                                                        <span className="truncate">{route.toLocation}</span>
+                                                    </p>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
+                                                <div className="flex items-center gap-3 flex-shrink-0">
+                                                    <Badge variant="outline">{route.buses.length} buses</Badge>
+                                                    <ChevronDown
+                                                        className={cn(
+                                                            'w-5 h-5 text-gray-400 transition-transform duration-200',
+                                                            expandedRoutes.has(route._id) && 'rotate-180'
+                                                        )}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+
+                                        {expandedRoutes.has(route._id) && (
+                                            <CardContent className="pt-0">
+                                                <Separator className="mb-4" />
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                    {route.buses.map((bus) => {
+                                                        const occupancy = parseFloat(bus.occupancyRate);
+                                                        return (
+                                                            <Card
+                                                                key={bus._id}
+                                                                className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50"
+                                                                onClick={() => fetchBusDetails(bus._id)}
+                                                            >
+                                                                <CardContent className="p-4">
+                                                                    <div className="flex justify-between items-start mb-3">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                                                                <Bus className="w-5 h-5 text-primary" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="font-semibold">
+                                                                                    {bus.busNumber}
+                                                                                </p>
+                                                                                <p className="text-xs text-gray-500 capitalize">
+                                                                                    {bus.type}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <Badge
+                                                                            className={cn(
+                                                                                'text-xs font-semibold',
+                                                                                occupancy > 80
+                                                                                    ? 'bg-red-100 text-red-700'
+                                                                                    : occupancy > 50
+                                                                                    ? 'bg-yellow-100 text-yellow-700'
+                                                                                    : 'bg-green-100 text-green-700'
+                                                                            )}
+                                                                        >
+                                                                            {bus.occupancyRate}%
+                                                                        </Badge>
+                                                                    </div>
+
+                                                                    <div className="space-y-2">
+                                                                        <div className="flex justify-between text-sm">
+                                                                            <span className="text-gray-600">
+                                                                                Capacity:
+                                                                            </span>
+                                                                            <span className="font-medium">
+                                                                                {bus.capacity} seats
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex justify-between text-sm">
+                                                                            <span className="text-gray-600">Booked:</span>
+                                                                            <span className="font-medium text-red-600">
+                                                                                {bus.bookedSeats} seats
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex justify-between text-sm">
+                                                                            <span className="text-gray-600">
+                                                                                Available:
+                                                                            </span>
+                                                                            <span className="font-medium text-green-600">
+                                                                                {bus.availableSeats} seats
+                                                                            </span>
+                                                                        </div>
+
+                                                                        {/* Visual Progress Bar */}
+                                                                        <div className="mt-3">
+                                                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                                                <div
+                                                                                    className={cn(
+                                                                                        'h-2 rounded-full transition-all',
+                                                                                        occupancy > 80
+                                                                                            ? 'bg-red-500'
+                                                                                            : occupancy > 50
+                                                                                            ? 'bg-yellow-500'
+                                                                                            : 'bg-green-500'
+                                                                                    )}
+                                                                                    style={{ width: `${occupancy}%` }}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </CardContent>
+                                                            </Card>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </CardContent>
+                                        )}
+                                    </Card>
+                                ))}
+                            </div>
+                        </ScrollArea>
                     </CardContent>
                 </Card>
 
                 {/* Bus Details Modal */}
                 <Dialog open={showBusModal} onOpenChange={setShowBusModal}>
-                    <DialogContent className="max-w-4xl">
+                    <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>
+                            <DialogTitle className="flex items-center gap-2">
+                                <Bus className="w-5 h-5" />
                                 {busDetails?.bus.busNumber} - Seat Occupancy Details
                             </DialogTitle>
+                            <DialogDescription>
+                                Real-time seat availability and booking trends
+                            </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-6">
+                        <div className="space-y-6 py-4">
                             {busDetails && (
                                 <>
-                                    <div className="grid grid-cols-2 gap-6">
-                                        {/* Seat Occupancy Pie Chart */}
-                                        <div>
-                                            <h3 className="text-sm font-medium mb-3">Current Occupancy</h3>
-                                            <ResponsiveContainer width="100%" height={250}>
-                                                <PieChart>
-                                                    <Pie
-                                                        data={[
-                                                            { name: 'Booked', value: busDetails.bookedSeats },
-                                                            { name: 'Available', value: busDetails.availableSeats }
-                                                        ]}
-                                                        cx="50%"
-                                                        cy="50%"
-                                                        labelLine={false}
-                                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                                        outerRadius={80}
-                                                        fill="#8884d8"
-                                                        dataKey="value"
-                                                    >
-                                                        <Cell fill="#EF4444" />
-                                                        <Cell fill="#10B981" />
-                                                    </Pie>
-                                                    <Tooltip
-                                                        formatter={(value) => [value, 'Seats']}
-                                                    />
-                                                </PieChart>
-                                            </ResponsiveContainer>
-                                            {/* Debug info - remove in production */}
-                                            <div className="text-xs text-gray-500 mt-2">
-                                                Debug: Booked: {busDetails.bookedSeats}, Available: {busDetails.availableSeats}
-                                            </div>
-                                        </div>
-
-                                        {/* Weekly Trend */}
-                                        <div>
-                                            <h3 className="text-sm font-medium mb-3">7-Day Booking Trend</h3>
-                                            <ResponsiveContainer width="100%" height={250}>
-                                                <LineChart data={busDetails.weeklyTrend}>
-                                                    <CartesianGrid strokeDasharray="3 3" />
-                                                    <XAxis
-                                                        dataKey="_id"
-                                                        tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                                    />
-                                                    <YAxis />
-                                                    <Tooltip
-                                                        labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                                                    />
-                                                    <Line type="monotone" dataKey="bookings" stroke="#3B82F6" />
-                                                </LineChart>
-                                            </ResponsiveContainer>
-                                        </div>
+                                    {/* Summary Stats */}
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                        <Card>
+                                            <CardContent className="p-4">
+                                                <p className="text-xs text-gray-600 mb-1">Total Seats</p>
+                                                <p className="text-2xl font-bold">{busDetails.totalSeats}</p>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="bg-red-50">
+                                            <CardContent className="p-4">
+                                                <p className="text-xs text-gray-600 mb-1">Booked Seats</p>
+                                                <p className="text-2xl font-bold text-red-600">
+                                                    {busDetails.bookedSeats}
+                                                </p>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="bg-green-50">
+                                            <CardContent className="p-4">
+                                                <p className="text-xs text-gray-600 mb-1">Available Seats</p>
+                                                <p className="text-2xl font-bold text-green-600">
+                                                    {busDetails.availableSeats}
+                                                </p>
+                                            </CardContent>
+                                        </Card>
+                                        <Card className="bg-blue-50">
+                                            <CardContent className="p-4">
+                                                <p className="text-xs text-gray-600 mb-1">Occupancy Rate</p>
+                                                <p className="text-2xl font-bold text-blue-600">
+                                                    {busDetails.occupancyRate}%
+                                                </p>
+                                            </CardContent>
+                                        </Card>
                                     </div>
 
-                                    {/* Bus Details */}
-                                    <div className="grid grid-cols-4 gap-4">
-                                        <div className="bg-gray-50 p-3 rounded">
-                                            <p className="text-xs text-gray-600">Total Seats</p>
-                                            <p className="text-xl font-bold">{busDetails.totalSeats}</p>
-                                        </div>
-                                        <div className="bg-red-50 p-3 rounded">
-                                            <p className="text-xs text-gray-600">Booked Seats</p>
-                                            <p className="text-xl font-bold text-red-600">{busDetails.bookedSeats}</p>
-                                        </div>
-                                        <div className="bg-green-50 p-3 rounded">
-                                            <p className="text-xs text-gray-600">Available Seats</p>
-                                            <p className="text-xl font-bold text-green-600">{busDetails.availableSeats}</p>
-                                        </div>
-                                        <div className="bg-blue-50 p-3 rounded">
-                                            <p className="text-xs text-gray-600">Occupancy Rate</p>
-                                            <p className="text-xl font-bold text-blue-600">{busDetails.occupancyRate}%</p>
-                                        </div>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        {/* Seat Occupancy Pie Chart */}
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle className="text-base">Current Occupancy</CardTitle>
+                                                <CardDescription>Seat distribution overview</CardDescription>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ResponsiveContainer width="100%" height={300}>
+                                                    <PieChart>
+                                                        <Pie
+                                                            data={[
+                                                                { name: 'Booked', value: busDetails.bookedSeats },
+                                                                {
+                                                                    name: 'Available',
+                                                                    value: busDetails.availableSeats,
+                                                                },
+                                                            ]}
+                                                            cx="50%"
+                                                            cy="50%"
+                                                            labelLine={false}
+                                                            label={({ name, percent }) =>
+                                                                `${name} ${(percent * 100).toFixed(0)}%`
+                                                            }
+                                                            outerRadius={100}
+                                                            fill="#8884d8"
+                                                            dataKey="value"
+                                                        >
+                                                            <Cell fill="#EF4444" />
+                                                            <Cell fill="#10B981" />
+                                                        </Pie>
+                                                        <Tooltip formatter={(value) => [value, 'Seats']} />
+                                                        <Legend />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                            </CardContent>
+                                        </Card>
+
+                                        {/* Weekly Trend */}
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle className="text-base">7-Day Booking Trend</CardTitle>
+                                                <CardDescription>Historical booking pattern</CardDescription>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <ResponsiveContainer width="100%" height={300}>
+                                                    <LineChart data={busDetails.weeklyTrend}>
+                                                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                                        <XAxis
+                                                            dataKey="_id"
+                                                            tickFormatter={(value) =>
+                                                                new Date(value).toLocaleDateString('en-US', {
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                })
+                                                            }
+                                                            tick={{ fontSize: 12 }}
+                                                        />
+                                                        <YAxis tick={{ fontSize: 12 }} />
+                                                        <Tooltip
+                                                            labelFormatter={(value) =>
+                                                                new Date(value).toLocaleDateString()
+                                                            }
+                                                            contentStyle={{
+                                                                backgroundColor: 'white',
+                                                                border: '1px solid #e5e7eb',
+                                                                borderRadius: '8px',
+                                                            }}
+                                                        />
+                                                        <Legend />
+                                                        <Line
+                                                            type="monotone"
+                                                            dataKey="bookings"
+                                                            stroke="#3B82F6"
+                                                            strokeWidth={2}
+                                                            name="Bookings"
+                                                            dot={{ r: 4 }}
+                                                            activeDot={{ r: 6 }}
+                                                        />
+                                                    </LineChart>
+                                                </ResponsiveContainer>
+                                            </CardContent>
+                                        </Card>
                                     </div>
                                 </>
                             )}

@@ -18,15 +18,9 @@ export async function GET(request: NextRequest) {
     }
 
     const decoded = verifyToken(token);
-    if (!hasPermission(decoded.role, 'buses:read')) {
-      return NextResponse.json<ApiResponse>({
-        success: false,
-        message: 'Forbidden'
-      }, { status: 403 });
-    }
 
     await connectToDatabase();
-    const buses = await Bus.find().populate('routeId').sort({ departureTime: 1, createdAt: -1 });
+    const buses = await Bus.find().populate('routeId', 'name fromLocation toLocation').sort({ departureTime: 1, createdAt: -1 });
 
     return NextResponse.json<ApiResponse>({
       success: true,
